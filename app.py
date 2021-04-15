@@ -5,8 +5,6 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Output, Input
 import pandas as pd
-import altair as alt
-from vega_datasets import data
 import warnings
 import intake
 import xarray as xr 
@@ -17,7 +15,8 @@ import gcsfs
 import cartopy.crs as ccrs
 from pathlib import Path
 import pandas as pd
-from a448_lib import data_read
+from cmpi_6_dash.src.a448_lib import data_read
+from cmpi_6_dash.src.plot_fcns import *
 import fsspec
 import cmocean as cm
 import cartopy.feature as cfeature
@@ -25,26 +24,7 @@ import numpy as np
 from io import BytesIO
 import base64
 
-def fig_to_uri(in_fig, close_all=True, **save_args):
-    # type: (plt.Figure) -> str
-    """
-    Save a figure as a URI
-    :param in_fig:
-    :return:
-    """
-    out_img = BytesIO()
-    in_fig.savefig(out_img, format='png', **save_args)
-    if close_all:
-        in_fig.clf()
-        plt.close('all')
-    out_img.seek(0)  # rewind file
-    encoded = base64.b64encode(out_img.read()).decode("ascii").replace("\n", "")
-    return "data:image/png;base64,{}".format(encoded)
-
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-
 # Code from jupyter notebook
-
 csv_filename = "pangeo-cmip6.csv"
 root = "https://storage.googleapis.com/cmip6"
 if Path(csv_filename).is_file():
@@ -59,37 +39,80 @@ catalog_df=pd.read_csv(csv_filename)
 
 col = intake.open_esm_datastore(json_filename)
 
-# Change source model by specifying it here
-source = "GFDL-CM4"
-# Querying to get Near Surface Air Temperature ('tas')
-query_variable_id = dict(
-    experiment_id=['historical'],
-    #institution_id = "CCCma",
-    source_id = source,
-    table_id = ['Amon'],
-    variable_id=['tas'])
+# Creating variable key dict constant
+var_key = {
+    'tas' : 
+        {'fullname' : 'Near-Surface Air Temperature',
+         'monthly_table' : 'Amon',
+         'units' : '[K]'},
+    'ta' :
+        {'fullname' : 'Air Temperature',
+         'monthly_table' : 'Amon',
+         'units' : '[K]'},
+    'pr' : 
+        {'fullname' : 'Precipitation',
+         'monthly_table' : 'Amon',
+         'units' : '[kg m-2 s-1]'},
+    'hus' : 
+        {'fullname' : 'Specific Humidity',
+         'monthly_table' : 'Amon' ,
+         'units' : '[1]'}, 
+    'cl' : 
+        {'fullname' : 'Percentage Cloud Cover',
+         'monthly_table' : 'Amon',
+         'units' : '[%]'},
+    'sisnthick' :
+        {'fullname' : 'Snow Thickness',
+         'monthly_table' : 'SImon',
+         'units' : '[m]'},
+    'sithick' :  
+        {'fullname' : 'Sea Ice Thickness',
+         'monthly_table' : 'SImon',
+         'units' : '[m]'},
+    'mrro' : 
+        {'fullname' : 'Total Runoff', 
+         'monthly_table' : 'Lmon',
+         'units' : '[kg m-2 s-1]'},
+    'lai' : 
+        {'fullname' : 'Leaf Area Index',
+         'monthly_table' : 'Lmon',
+         'units' : '[1]'}, 
+    'mrso' : {'fullname' : 'Total Soil Moisture Content' ,
+              'monthly_table' : 'Lmon',
+              'units' : '[kg m-2]'}
+}
 
-col_var_subset = col.search(**query_variable_id)
+# Creating object
+full_name_key = []
+for var in var_key:
+    full_name_key.append({'label' : var_key[var]['fullname'], 'value' : var})
 
-# Getting the member number for the first experiment
-tas_member = col_var_subset.df['member_id'][0]
+# Helper functions
+def get_monthly_table_for_var(var_id):
+    '''Returns appropriate X-mon for a given variable id from
+       the var key'''
+    return var_key[var_id]['monthly_table']
 
-tas_filename =col_var_subset.df.query("member_id==@tas_member")['zstore'].iloc[0]
 
-dset_cccma_tas=xr.open_zarr(fsspec.get_mapper(tas_filename), consolidated=True)
 
-# Specifying a year and month to select by with xarray
-# TODO: Find more elegant solution, probably something with cftime\
-Year = '2000'
-Month = '07'
-start_date = Year + '-' + Month + '-' + '01'
-end_date = Year + '-' + Month + '-' + '30'
+def get_models_with_var(data_store, var_id, table_id):
+    '''Takes a variable id and a corresponding table id and and returns all the model labels 
+       with the combination '''
+    query_variable_id = dict(
+        experiment_id=['historical'],
+        table_id = [table_id],
+        variable_id=[var_id])
 
-tas_lon = dset_cccma_tas.lon
-tas_lat = dset_cccma_tas.lat
-# Indexing for a particular month. Plotting code get upset if we don't index here.
-tas_data = dset_cccma_tas['tas'].sel(time=slice(start_date, end_date))[0,:,:]
+    data_sets = data_store.search(**query_variable_id)
+    return(data_sets.df.source_id.unique())
 
+models = get_models_with_var(data_store = col, var_id = 'tas', table_id = get_monthly_table_for_var('tas'))
+model_list = []
+for mod in models:
+    model_list.append({'value' : mod, 'label' : mod})
+
+# Layout for the app
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 app.layout = dbc.Container([
     dbc.Row([
@@ -114,15 +137,18 @@ app.layout = dbc.Container([
         dbc.Col([
             html.H6('Model Variable'),
             dcc.Dropdown(id = 'var_drop',
-                        value = 'tas'),
+                        value = 'tas',
+                        options = full_name_key),
             html.Br(),
             html.H6('Model'),
+            dcc.Dropdown(id = 'mod_drop',
+                        value = 'CanESM5',
+                        options = model_list),
+            html.Br(),
+            html.H6('Year'),
             dcc.Dropdown(),
             html.Br(),
-            html.H6('Model'),
-            dcc.Dropdown(),
-            html.Br(),
-            html.H6('Model'),
+            html.H6('Month'),
             dcc.Dropdown(),
             ],
             md=2,
@@ -134,7 +160,7 @@ app.layout = dbc.Container([
             dbc.Row([
                 dbc.Col([
                     dbc.Card([
-                        dbc.CardHeader('Variable distrbution', style={'fontWeight': 'bold'}),
+                        dbc.CardHeader('Climate Plot', style={'fontWeight': 'bold'}),
                         dbc.CardBody(
                             html.Img(
                                 id='histogram',
@@ -148,25 +174,16 @@ app.layout = dbc.Container([
     html.P('')
 ])
 
+# Callbacks
 @app.callback(
     Output('histogram', "src"),
     Input('var_drop', "value"))
-def update_histogram(var_drop):
-    f, ax = plt.subplots(1,1,figsize=(20,10),
-                     subplot_kw=dict(projection=ccrs.PlateCarree()))
-
-    p = ax.pcolormesh(tas_lon,
-              tas_lat,
-              tas_data,
-              transform=ccrs.PlateCarree())
-
-    f.colorbar(p, label='Temp (Kelvin)', shrink = .5)
-    ax.set_title('Global Temperatures' )
-
-    # Add land.
-    ax.add_feature(cfeature.LAND, color='#a9a9a9', zorder=4)
-    out_url = fig_to_uri(f)
-    return out_url
+def update_map(var_drop):
+    var_id = var_drop
+    mod_id = 'GFDL-CM4'
+    dset = get_cmpi6_model_run(data_store = col, var_id = var_id,
+     mod_id = mod_id)
+    return plot_year(dset, var_id = var_id, month = '01', year = '1875', layer = 4)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
