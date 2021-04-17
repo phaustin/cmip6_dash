@@ -35,10 +35,10 @@ def get_var_key():
             {'fullname' : 'Specific Humidity',
             'monthly_table' : 'Amon' ,
             'units' : '[1]'}, 
-        'cl' : 
-            {'fullname' : 'Percentage Cloud Cover',
-            'monthly_table' : 'Amon',
-            'units' : '[%]'},
+        #'cl' : 
+        #    {'fullname' : 'Percentage Cloud Cover',
+        #    'monthly_table' : 'Amon',
+        #    'units' : '[%]'},
         'sisnthick' :
             {'fullname' : 'Snow Thickness',
             'monthly_table' : 'SImon',
@@ -209,6 +209,7 @@ def plot_year_plotly(dset, var_id, month, year, layer = 1):
     # Invisible plotly express scatter of var values at lons and lats. Added this here to get the box and lasso select to do the mean/ variance.
     # A bit of a hack but seems to be the best option currently.
     fig = px.scatter(var_df, x = 'lon_adj', y = 'lat', color = var_id, opacity = 0)
+    fig.update_layout(coloraxis_showscale=False)
 
     # Adding cartopy features to our plot
     fig = get_outline(fig)
