@@ -13,6 +13,7 @@ import cmocean as cm
 import cartopy.feature as cfeature
 import numpy as np
 import plotly.graph_objects as go
+import plotly.express as px
 import cartopy.feature as cf
 
 # Creating dictionary to map names of model variables to full names, associated tables, and units
@@ -77,21 +78,20 @@ def get_monthly_table_for_var(var_id):
     var_key = get_var_key()
     return var_key[var_id]['monthly_table']
 
-def get_outline():
-    """returns a plotly figure with cartopy's coastline geometries on it"""
+def get_outline(fig):
+    """Takes a figure and adds cartopy's coastline geometries on it"""
     x_coords = []
     y_coords = []
     for coord_seq in cf.COASTLINE.geometries():
         x_coords.extend([k[0] for k in coord_seq.coords] + [np.nan])
         y_coords.extend([k[1] for k in coord_seq.coords] + [np.nan])
-
-    # in your app callback for dash
-    fig = go.Figure()
     fig.add_trace(
         go.Scatter(
             x = x_coords,
             y = y_coords,
-            mode = 'lines'))
+            mode = 'lines',
+            line=dict(color="#FFFFFF")))
+            
     return fig
 
 def get_cmpi6_model_run(data_store, var_id, mod_id):
@@ -135,8 +135,44 @@ def get_cmpi6_model_run(data_store, var_id, mod_id):
 
     return dset_opened
 
-def plot_year_plotly(dset, var_id, month, year, layer = 1):
+def get_month_and_year(dset, var_id, month, year, layer = 1):
+    """ 
+    This function filters an xarray dset for a given month, year and layer from the cmpi6 historical runs and returns it. It 
+    assumes montly data where the day is specified between the 14th and the 17th.
 
+    Parameters
+    ----------
+    dset : xarray.Dataset
+        The xarray.Dataset to plot
+    var_id : 'str'
+        The variable to be plotted.
+    month : 'str'
+        String specifying which month to plot.
+        Must be between '01'-'12'. 0 required for single digit months.
+    year : 'str'
+        Year to plot. Must be between '1850' and '2014'
+    layer : int
+        Must be between 0 and 18- only used for plotting humidity and temp
+        
+    Returns
+    -------
+    fig : plotly figure object
+    """
+    # Specifying a year and month to select by with xarray
+    start_date = year + '-' + month + '-' + '14'
+    end_date = year + '-' + month + '-' + '17'
+   
+    # Slicing model output on the given times two ways depending on whether or not the model has layers
+    layer_vars = ['hus', 'ta']
+    if var_id in layer_vars:
+        var_data = dset[var_id].sel(time=slice(start_date, end_date))[0, layer,:,:]
+    else:
+        var_data = dset[var_id].sel(time=slice(start_date, end_date))[0,:,:]
+
+    return var_data
+
+def plot_year_plotly(dset, var_id, month, year, layer = 1):
+    
     """ This function plots results for a given month and year for a variable given by var_id in the dset 
 
     Wraps plotly plotting code for a one month, year slice of cmpi-6 climate model output for the given variable
@@ -159,20 +195,10 @@ def plot_year_plotly(dset, var_id, month, year, layer = 1):
     -------
     fig : plotly figure object
     """
-    var_key = get_var_key()
-    # Specifying a year and month to select by with xarray
-    start_date = year + '-' + month + '-' + '14'
-    end_date = year + '-' + month + '-' + '17'
 
-    lon = dset.lon
-    lat = dset.lat
-   
-    # Slicing model output on the given times two ways depending on whether or not the model has layers
-    layer_vars = ['hus', 'ta']
-    if var_id in layer_vars:
-        var_data = dset[var_id].sel(time=slice(start_date, end_date))[0, layer,:,:]
-    else:
-        var_data = dset[var_id].sel(time=slice(start_date, end_date))[0,:,:]
+    var_data = get_month_and_year(dset, var_id, month, year, layer)
+
+    var_key = get_var_key()
     
     # Converting to a df so we can use plotly
     var_df = var_data.to_dataframe().reset_index()
@@ -180,8 +206,10 @@ def plot_year_plotly(dset, var_id, month, year, layer = 1):
     # Converting from a 0-360 longitudinal system to a -180-180 longitudinal system
     var_df['lon_adj'] = var_df['lon'].apply(lambda x: x - 360 if x > 180 else x)
     
+    fig = px.scatter(var_df, x = 'lon_adj', y = 'lat', color = var_id, opacity = 0)
+
     # Plotting
-    fig = get_outline()
+    fig = get_outline(fig)
    
     fig.add_trace(
         go.Contour(
@@ -194,14 +222,15 @@ def plot_year_plotly(dset, var_id, month, year, layer = 1):
                 "outlinewidth": 0, 
                 "thickness": 15, 
                 "tickfont": {"size": 14}, 
-                "title": var_key[var_id]['units']}, #gives your legend some units                                                                     
+                "title": var_key[var_id]['units']}, #gives your legend some units                                                                     #
 
                 contours= {
                 #"end": 4, 
                 "showlines": False, 
-                #"size": 0.5, #this is your contour interval
-                #"start": -4 
+               # "size": 0.5, #this is your contour interval
+               # "start": -4 
                 }))
+
     fig.update_layout(margin={"r":1,"t":4,"l":1,"b":1},
                      title = var_key[var_id]['fullname'] + ' ' + year + '-' + month)
 
