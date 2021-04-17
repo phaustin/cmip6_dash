@@ -206,9 +206,11 @@ def plot_year_plotly(dset, var_id, month, year, layer = 1):
     # Converting from a 0-360 longitudinal system to a -180-180 longitudinal system
     var_df['lon_adj'] = var_df['lon'].apply(lambda x: x - 360 if x > 180 else x)
     
+    # Invisible plotly express scatter of var values at lons and lats. Added this here to get the box and lasso select to do the mean/ variance.
+    # A bit of a hack but seems to be the best option currently.
     fig = px.scatter(var_df, x = 'lon_adj', y = 'lat', color = var_id, opacity = 0)
 
-    # Plotting
+    # Adding cartopy features to our plot
     fig = get_outline(fig)
    
     fig.add_trace(
@@ -222,8 +224,9 @@ def plot_year_plotly(dset, var_id, month, year, layer = 1):
                 "outlinewidth": 0, 
                 "thickness": 15, 
                 "tickfont": {"size": 14}, 
-                "title": var_key[var_id]['units']}, #gives your legend some units                                                                     #
+                "title": var_key[var_id]['units']}, #specifies units here                                                                    
 
+                # Sizing and spacing of contours can be changed by editing these commented out iptions
                 contours= {
                 #"end": 4, 
                 "showlines": False, 
