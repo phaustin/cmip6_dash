@@ -92,6 +92,9 @@ app.layout = dbc.Container([
             html.Br(),
             html.H6('Month'),
             dcc.Dropdown(),
+            html.Br(),
+            html.H6(id = 'output-area'),
+            dbc.Card(dbc.CardBody(id='mean_card'))
             ],
             md=2,
             style={
@@ -125,6 +128,20 @@ def update_map(var_drop):
     mod_id = 'GFDL-CM4'
     fig = plotly_wrapper(col, var_id, mod_id, month = '01', year = '1950', layer = 1)
     return fig
+
+@app.callback(
+    Output('mean_card', 'children'),
+    Input('histogram', 'selectedData'))
+def update_mean(selection):
+    if selection is None:
+        return 0
+    var_vals = []
+    for dict in selection['points']:
+        val = dict['marker.color']
+        var_vals.append(val)
+        mean = np.mean(np.array(var_vals))
+    return round(mean)
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
