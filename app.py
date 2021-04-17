@@ -93,8 +93,12 @@ app.layout = dbc.Container([
             html.H6('Month'),
             dcc.Dropdown(),
             html.Br(),
-            html.H6(id = 'output-area'),
-            dbc.Card(dbc.CardBody(id='mean_card'))
+            html.H6('Mean'),
+            dbc.Card(dbc.CardBody(id='mean_card')),
+            html.Br(),
+            html.H6('Std. Dev'),
+            dbc.Card(dbc.CardBody(id='var_card'))
+
             ],
             md=2,
             style={
@@ -140,7 +144,20 @@ def update_mean(selection):
         val = dict['marker.color']
         var_vals.append(val)
         mean = np.mean(np.array(var_vals))
-    return round(mean)
+    return mean #round(mean, 2)
+
+@app.callback(
+    Output('var_card', 'children'),
+    Input('histogram', 'selectedData'))
+def update_variance(selection):
+    if selection is None:
+        return 0
+    var_vals = []
+    for dict in selection['points']:
+        val = dict['marker.color']
+        var_vals.append(val)
+        std = np.std(np.array(var_vals))
+    return std #round(std, 2)
 
 
 if __name__ == '__main__':
