@@ -21,8 +21,7 @@ import fsspec
 import cmocean as cm
 import cartopy.feature as cfeature
 import numpy as np
-from io import BytesIO
-import base64
+from datetime import date
 
 # Checking to see if the data is already downloaded
 csv_filename = "pangeo-cmip6.csv"
@@ -46,12 +45,6 @@ var_key = get_var_key()
 full_name_key = []
 for var in var_key:
     full_name_key.append({'label' : var_key[var]['fullname'], 'value' : var})
-
-# Creating object with all models for given variables
-models = get_models_with_var(data_store = col, var_id = 'tas', table_id = get_monthly_table_for_var('tas'))
-model_list = []
-for mod in models:
-    model_list.append({'value' : mod, 'label' : mod})
 
 # Layout for the app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -84,14 +77,14 @@ app.layout = dbc.Container([
             html.Br(),
             html.H6('Model'),
             dcc.Dropdown(id = 'mod_drop',
-                        value = 'CanESM5',
-                        options = model_list),
+                        value = 'CanESM5'),
             html.Br(),
-            html.H6('Year'),
-            dcc.Dropdown(),
+            html.H6('Date YYYY/MM'),
+            dcc.Input(id = 'date_input',
+                     value = '1975/02',
+                     debounce = True,
+                     style={'border-width': '0', 'width': '100%'}),
             html.Br(),
-            html.H6('Month'),
-            dcc.Dropdown(),
             html.Br(),
             html.H6('Mean'),
             dbc.Card(dbc.CardBody(id='mean_card')),
@@ -129,12 +122,14 @@ app.layout = dbc.Container([
 @app.callback(
     Output('histogram', "figure"),
     Input('var_drop', "value"),
-    Input('mod_drop', 'value'))
-def update_map(var_drop, mod_drop):
+    Input('mod_drop', 'value'),
+    Input('date_input', 'value'))
+def update_map(var_drop, mod_drop, date_input):
     """
     Updates the graph when the a different variable is selected
     """
-    fig = plotly_wrapper(col, var_drop, mod_drop, month = '01', year = '1950', layer = 1)
+    date_list = date_input.split('/')
+    fig = plotly_wrapper(col, var_drop, mod_drop, month = date_list[1], year = date_list[0], layer = 1)
     return fig
 
 @app.callback(
