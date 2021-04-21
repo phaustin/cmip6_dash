@@ -5,23 +5,13 @@ import dash_core_components as dcc
 import dash_html_components as html
 from dash.dependencies import Output, Input
 import pandas as pd
-import warnings
 import intake
-import xarray as xr 
-import matplotlib.pyplot as plt 
 import pandas as pd 
-import cftime
-import gcsfs
-import cartopy.crs as ccrs
 from pathlib import Path
 import pandas as pd
 from src.a448_lib import data_read
 from src.plot_fcns import *
-import fsspec
-import cmocean as cm
-import cartopy.feature as cfeature
 import numpy as np
-from datetime import date
 
 # Checking to see if the data is already downloaded
 csv_filename = "pangeo-cmip6.csv"
@@ -52,7 +42,7 @@ app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.layout = dbc.Container([
     dbc.Row([
         dbc.Col([
-            html.H1('My splashboard demo',
+            html.H1('CMPI-6 Dashboard',
                 style={
                     'color': 'white',
                     'text-align': 'left',
