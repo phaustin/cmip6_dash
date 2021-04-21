@@ -235,9 +235,12 @@ def plot_year_plotly(dset, var_id, month, year, layer = 1):
                # "size": 0.5, #this is your contour interval
                # "start": -4 
                 }))
+    fig.update_xaxes(range=[-180, 180], showticklabels = False, visible = False)
+    fig.update_yaxes(range=[-90, 90], showticklabels = False, visible = False)
 
-    fig.update_layout(margin={"r":1,"t":4,"l":1,"b":1},
+    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0},
                      title = var_key[var_id]['fullname'] + ' ' + year + '-' + month)
+
 
     return fig
 
