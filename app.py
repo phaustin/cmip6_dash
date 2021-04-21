@@ -126,17 +126,22 @@ app.layout = dbc.Container([
 # Callbacks
 @app.callback(
     Output('histogram', "figure"),
-    Input('var_drop', "value"))
-def update_map(var_drop):
-    var_id = var_drop
-    mod_id = 'GFDL-CM4'
-    fig = plotly_wrapper(col, var_id, mod_id, month = '01', year = '1950', layer = 1)
+    Input('var_drop', "value"),
+    Input('mod_drop', 'value'))
+def update_map(var_drop, mod_drop):
+    """
+    Updates the graph when the a different variable is selected
+    """
+    fig = plotly_wrapper(col, var_drop, mod_drop, month = '01', year = '1950', layer = 1)
     return fig
 
 @app.callback(
     Output('mean_card', 'children'),
     Input('histogram', 'selectedData'))
 def update_mean(selection):
+    """
+    Updates the mean card depending on the selected data in the graph
+    """
     if selection is None:
         return 0
     var_vals = []
@@ -150,6 +155,9 @@ def update_mean(selection):
     Output('var_card', 'children'),
     Input('histogram', 'selectedData'))
 def update_variance(selection):
+    """
+    Updates the variance card depending on the selected data in the graph
+    """
     if selection is None:
         return 0
     var_vals = []
@@ -158,6 +166,21 @@ def update_variance(selection):
         var_vals.append(val)
         std = np.std(np.array(var_vals))
     return std #round(std, 2)
+
+# Callbacks
+@app.callback(
+    Output('mod_drop', "options"),
+    Input('var_drop', "value"))
+def update_mod_drop(var_drop):
+    """
+    returns the appropriate set of models for the selected figure
+    """
+    # Creating object with all models for given variables
+    models = get_models_with_var(data_store = col, var_id = var_drop, table_id = get_monthly_table_for_var(var_drop))
+    model_list = []
+    for mod in models:
+        model_list.append({'value' : mod, 'label' : mod})
+    return model_list
 
 
 if __name__ == '__main__':
