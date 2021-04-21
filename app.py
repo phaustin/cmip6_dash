@@ -108,6 +108,7 @@ app.layout = dbc.Container([
         dbc.Col([
             dbc.Row([
                 dbc.Col([
+                    dcc.Loading(
                     dbc.Card([
                         dbc.CardHeader('Climate Plot', style={'fontWeight': 'bold'}),
                         dbc.CardBody(
@@ -115,7 +116,8 @@ app.layout = dbc.Container([
                                 id='histogram',
                                 style={'border-width': '0', 'width': '100%', 'height': '100%'}
                                 ))
-                                ])])
+                                ]))
+                                ])
             ])
         ])
     ]),
