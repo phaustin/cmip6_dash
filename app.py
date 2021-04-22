@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 import pandas as pd 
 import cftime
 import gcsfs
-import cartopy.crs as ccrs
 from pathlib import Path
 import pandas as pd
 from src.a448_lib import data_read
