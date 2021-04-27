@@ -1,0 +1,22 @@
+name: notebook
+channels:
+  - eoas_ubc
+  - conda-forge
+dependencies:
+  - python=3.8
+  - pip~=21.0
+  - numpy
+  - scipy
+  - pre-commit
+  - cmocean
+  - intake
+  - git
+  - gcsfs
+  - cartopy
+  - mamba
+  - intake-esm
+  - dash
+  - matplotlib
+  - jupytext
+  - conda-lock
+# conda-lock -f environment.yml -p linux-64
