@@ -10,7 +10,7 @@ import pandas as pd
 from dash.dependencies import Input
 from dash.dependencies import Output
 from src.a448_lib import data_read
-from src.plot_fcns import get_var_key, plotly_wrapper
+from src.plot_fcns import get_var_key, plotly_wrapper, get_models_with_var, get_monthly_table_for_var
 
 # Checking to see if the data is already downloaded
 csv_filename = "pangeo-cmip6.csv"
