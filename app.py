@@ -30,10 +30,15 @@ col = intake.open_esm_datastore(json_filename)
 
 var_key = get_var_key()
 
-# Creating object with all variable full names
+# Creating object with all variable full names for dropdown
 full_name_key = []
 for var in var_key:
     full_name_key.append({"label": var_key[var]["fullname"], "value": var})
+
+# Experimental run names for exp_dropdown
+exp_options = [{'label' : 'Historical Runs', 'value' : 'historical'},
+ {'label' : 'SSP245', 'value' : 'ssp245'},
+ {'label' : 'SSP585', 'value' : 'ssp585'}]
 
 # Layout for the app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -82,6 +87,14 @@ app.layout = dbc.Container(
                             style={"border-width": "0", "width": "100%"},
                         ),
                         html.Br(),
+                        html.Br(),
+                        html.H6("Experiment Label"),
+                        dcc.Dropdown(
+                            id="exp_drop",
+                            value="historical",
+                            options = exp_options,
+                            style={"border-width": "0", "width": "100%"},
+                        ),
                         html.Br(),
                         html.H6("Mean"),
                         dbc.Card(dbc.CardBody(id="mean_card")),
@@ -141,14 +154,15 @@ app.layout = dbc.Container(
     Input("var_drop", "value"),
     Input("mod_drop", "value"),
     Input("date_input", "value"),
+    Input("exp_drop", "value")
 )
-def update_map(var_drop, mod_drop, date_input):
+def update_map(var_drop, mod_drop, date_input, exp_drop):
     """
     Updates the graph when the a different variable is selected
     """
     date_list = date_input.split("/")
     fig = plotly_wrapper(
-        col, var_drop, mod_drop, month=date_list[1], year=date_list[0], layer=1
+        col, var_drop, mod_drop, exp_drop, month=date_list[1], year=date_list[0], layer=1
     )
     return fig
 

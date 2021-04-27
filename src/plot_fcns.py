@@ -94,7 +94,7 @@ def get_outline(fig):
             
     return fig
 
-def get_cmpi6_model_run(data_store, var_id, mod_id):
+def get_cmpi6_model_run(data_store, var_id, mod_id, exp_id = 'historical'):
     """ Queries a given data store for historical model runs for the given variable id
 
     Wraps a query for the data_store using variable and model id from the associated monthly
@@ -119,7 +119,7 @@ def get_cmpi6_model_run(data_store, var_id, mod_id):
     
     # Querying datastore to get xarr file
     query_variable_id = dict(
-        experiment_id=['historical'],
+        experiment_id=[exp_id],
         source_id = mod_id,
         table_id = [get_monthly_table_for_var(var_id)],
         variable_id=[var_id])
@@ -156,7 +156,8 @@ def get_month_and_year(dset, var_id, month, year, layer = 1):
         
     Returns
     -------
-    fig : plotly figure object
+    var_data : xarray.Dataset
+        The xarray.Dataset filtered for the given, month, year, and layer
     """
     # Specifying a year and month to select by with xarray
     start_date = year + '-' + month + '-' + '14'
@@ -244,8 +245,9 @@ def plot_year_plotly(dset, var_id, month, year, layer = 1):
 
     return fig
 
-def plotly_wrapper(data_store, var_id = 'tas', mod_id = 'GFDL-CM4', month = '01', year = '1950', layer = 1):
+def plotly_wrapper(data_store, var_id = 'tas', mod_id = 'GFDL-CM4',
+ exp_id = 'historical', month = '01', year = '1950', layer = 1):
     '''Wraps model request and plotting code for ease of use'''
-    dset = get_cmpi6_model_run(data_store, var_id, mod_id)
+    dset = get_cmpi6_model_run(data_store, var_id, mod_id, exp_id)
     fig = plot_year_plotly(dset, var_id, month, year, layer)
     return fig
