@@ -218,7 +218,7 @@ def update_mean(selection):
         val = dict["marker.color"]
         var_vals.append(val)
         mean = np.mean(np.array(var_vals))
-    return mean  # round(mean, 2)
+    return f"{mean:.2e}"
 
 
 @app.callback(Output("var_card", "children"), Input("histogram", "selectedData"))
@@ -233,7 +233,7 @@ def update_variance(selection):
         val = dict["marker.color"]
         var_vals.append(val)
         std = np.std(np.array(var_vals))
-    return std  # round(std, 2)
+    return f"{std:.2e}"
 
 
 if __name__ == "__main__":
