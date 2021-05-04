@@ -184,6 +184,28 @@ def update_map(var_drop, mod_drop, date_input, exp_drop):
     return fig
 
 
+@app.callback(Output("exp_drop", "options"), Input("date_input", "value"))
+def restrict_experiments(date_input):
+    """
+    This function changes the possible values of the experiment drop downs based on the
+    selected date
+    """
+    date_list = date_input.split("/")
+    year = int(date_list[0])
+    if year < 2014:
+        exp_options = [
+            {"label": "Historical Runs", "value": "historical"},
+            {"label": "Preindustrial Control", "value": "piControl"},
+        ]
+    else:
+        exp_options = [
+            {"label": "SSP245", "value": "ssp245"},
+            {"label": "SSP585", "value": "ssp585"},
+            {"label": "Preindustrial Control", "value": "piControl"},
+        ]
+    return exp_options
+
+
 @app.callback(Output("mean_card", "children"), Input("histogram", "selectedData"))
 def update_mean(selection):
     """
