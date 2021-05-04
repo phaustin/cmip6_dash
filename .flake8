@@ -1,2 +1,6 @@
 [flake8]
+# Ignoring variable assinged but not used error because it gets upset
+# About the "@var" syntax in .query()
+ignore = F841
+# Changing the line length to be consistent with black defaults
 max-line-length = 88
