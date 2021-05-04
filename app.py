@@ -9,8 +9,10 @@ import numpy as np
 import pandas as pd
 from dash.dependencies import Input
 from dash.dependencies import Output
+
 from src.a448_lib import data_read
-from src.plot_fcns import get_var_key, plotly_wrapper, get_models_with_var, get_monthly_table_for_var
+from src.plot_fcns import get_var_key
+from src.plot_fcns import plotly_wrapper
 
 # Checking to see if the data is already downloaded
 csv_filename = "pangeo-cmip6.csv"
@@ -36,9 +38,85 @@ for var in var_key:
     full_name_key.append({"label": var_key[var]["fullname"], "value": var})
 
 # Experimental run names for exp_dropdown
-exp_options = [{'label' : 'Historical Runs', 'value' : 'historical'},
- {'label' : 'SSP245', 'value' : 'ssp245'},
- {'label' : 'SSP585', 'value' : 'ssp585'}]
+exp_options = [
+    {"label": "Historical Runs", "value": "historical"},
+    {"label": "Preindustrial Control", "value": "piControl"},
+    {"label": "SSP245", "value": "ssp245"},
+    {"label": "SSP585", "value": "ssp585"},
+]
+
+# Model names for mod_drop
+mod_options = [
+    {"label": "CanESM5", "value": "CanESM5"},
+    {"label": "HadGEM3-GC31-MM", "value": "HadGEM3-GC31-MM"},
+    {"label": "CESM2", "value": "CESM2"},
+]
+
+# Plot displaying heatmap of selected run card
+climate_heatmap_card = dbc.Col(
+    [
+        dcc.Loading(
+            dbc.Card(
+                [
+                    dbc.CardHeader(
+                        "Climate Plot",
+                        style={"fontWeight": "bold"},
+                    ),
+                    dbc.CardBody(
+                        dcc.Graph(
+                            id="histogram",
+                            style={
+                                "border-width": "0",
+                                "width": "100%",
+                                "height": "100%",
+                            },
+                        )
+                    ),
+                ]
+            )
+        )
+    ]
+)
+
+# Dropdowns for specifying model run
+dashboard_controls = dbc.Col(
+    [
+        html.H6("Model Variable"),
+        dcc.Dropdown(id="var_drop", value="tas", options=full_name_key),
+        html.Br(),
+        html.H6("Model"),
+        dcc.Dropdown(id="mod_drop", value="CanESM5", options=mod_options),
+        html.Br(),
+        html.H6("Date YYYY/MM"),
+        dcc.Input(
+            id="date_input",
+            value="1975/02",
+            debounce=True,
+            style={"border-width": "0", "width": "100%"},
+        ),
+        html.Br(),
+        html.Br(),
+        html.H6("Experiment Label"),
+        dcc.Dropdown(
+            id="exp_drop",
+            value="historical",
+            options=exp_options,
+            style={"border-width": "0", "width": "100%"},
+        ),
+        html.Br(),
+        html.H6("Mean"),
+        dbc.Card(dbc.CardBody(id="mean_card")),
+        html.Br(),
+        html.H6("Std. Dev"),
+        dbc.Card(dbc.CardBody(id="var_card")),
+    ],
+    md=2,
+    style={
+        "background-color": "#e6e6e6",
+        "padding": 15,
+        "border-radius": 3,
+    },
+)
 
 # Layout for the app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -56,7 +134,7 @@ app.layout = dbc.Container(
                                 "text-align": "left",
                                 "font-size": "48px",
                             },
-                        )  # , 'width': 300}),
+                        )
                     ],
                     style={
                         "backgroundColor": "steelblue",
@@ -71,76 +149,8 @@ app.layout = dbc.Container(
         ),
         dbc.Row(
             [
-                dbc.Col(
-                    [
-                        html.H6("Model Variable"),
-                        dcc.Dropdown(id="var_drop", value="tas", options=full_name_key),
-                        html.Br(),
-                        html.H6("Model"),
-                        dcc.Dropdown(id="mod_drop", value="CanESM5"),
-                        html.Br(),
-                        html.H6("Date YYYY/MM"),
-                        dcc.Input(
-                            id="date_input",
-                            value="1975/02",
-                            debounce=True,
-                            style={"border-width": "0", "width": "100%"},
-                        ),
-                        html.Br(),
-                        html.Br(),
-                        html.H6("Experiment Label"),
-                        dcc.Dropdown(
-                            id="exp_drop",
-                            value="historical",
-                            options = exp_options,
-                            style={"border-width": "0", "width": "100%"},
-                        ),
-                        html.Br(),
-                        html.H6("Mean"),
-                        dbc.Card(dbc.CardBody(id="mean_card")),
-                        html.Br(),
-                        html.H6("Std. Dev"),
-                        dbc.Card(dbc.CardBody(id="var_card")),
-                    ],
-                    md=2,
-                    style={
-                        "background-color": "#e6e6e6",
-                        "padding": 15,
-                        "border-radius": 3,
-                    },
-                ),
-                dbc.Col(
-                    [
-                        dbc.Row(
-                            [
-                                dbc.Col(
-                                    [
-                                        dcc.Loading(
-                                            dbc.Card(
-                                                [
-                                                    dbc.CardHeader(
-                                                        "Climate Plot",
-                                                        style={"fontWeight": "bold"},
-                                                    ),
-                                                    dbc.CardBody(
-                                                        dcc.Graph(
-                                                            id="histogram",
-                                                            style={
-                                                                "border-width": "0",
-                                                                "width": "100%",
-                                                                "height": "100%",
-                                                            },
-                                                        )
-                                                    ),
-                                                ]
-                                            )
-                                        )
-                                    ]
-                                )
-                            ]
-                        )
-                    ]
-                ),
+                dashboard_controls,
+                dbc.Col([dbc.Row([dbc.Col([climate_heatmap_card])])]),
             ]
         ),
         html.Hr(),
@@ -148,13 +158,14 @@ app.layout = dbc.Container(
     ]
 )
 
+
 # Callbacks
 @app.callback(
     Output("histogram", "figure"),
     Input("var_drop", "value"),
     Input("mod_drop", "value"),
     Input("date_input", "value"),
-    Input("exp_drop", "value")
+    Input("exp_drop", "value"),
 )
 def update_map(var_drop, mod_drop, date_input, exp_drop):
     """
@@ -162,7 +173,13 @@ def update_map(var_drop, mod_drop, date_input, exp_drop):
     """
     date_list = date_input.split("/")
     fig = plotly_wrapper(
-        col, var_drop, mod_drop, exp_drop, month=date_list[1], year=date_list[0], layer=1
+        col,
+        var_drop,
+        mod_drop,
+        exp_drop,
+        month=date_list[1],
+        year=date_list[0],
+        layer=1,
     )
     return fig
 
@@ -195,22 +212,6 @@ def update_variance(selection):
         var_vals.append(val)
         std = np.std(np.array(var_vals))
     return std  # round(std, 2)
-
-
-# Callbacks
-@app.callback(Output("mod_drop", "options"), Input("var_drop", "value"))
-def update_mod_drop(var_drop):
-    """
-    returns the appropriate set of models for the selected figure
-    """
-    # Creating object with all models for given variables
-    models = get_models_with_var(
-        data_store=col, var_id=var_drop, table_id=get_monthly_table_for_var(var_drop)
-    )
-    model_list = []
-    for mod in models:
-        model_list.append({"value": mod, "label": mod})
-    return model_list
 
 
 if __name__ == "__main__":
