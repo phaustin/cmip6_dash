@@ -37,14 +37,6 @@ full_name_key = []
 for var in var_key:
     full_name_key.append({"label": var_key[var]["fullname"], "value": var})
 
-# Experimental run names for exp_dropdown
-exp_options = [
-    {"label": "Historical Runs", "value": "historical"},
-    {"label": "Preindustrial Control", "value": "piControl"},
-    {"label": "SSP245", "value": "ssp245"},
-    {"label": "SSP585", "value": "ssp585"},
-]
-
 # Model names for mod_drop
 mod_options = [
     {"label": "CanESM5", "value": "CanESM5"},
@@ -100,7 +92,6 @@ dashboard_controls = dbc.Col(
         dcc.Dropdown(
             id="exp_drop",
             value="historical",
-            options=exp_options,
             style={"border-width": "0", "width": "100%"},
         ),
         html.Br(),
