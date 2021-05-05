@@ -175,17 +175,26 @@ def update_map(var_drop, mod_drop, date_input, exp_drop):
     return fig
 
 
-@app.callback(Output("exp_drop", "options"), Input("date_input", "value"))
-def restrict_experiments(date_input):
+@app.callback(
+    Output("exp_drop", "options"),
+    Input("date_input", "value"),
+    Input("mod_drop", "value"),
+)
+def restrict_experiments(date_input, mod_drop):
     """
     This function changes the possible values of the experiment drop downs based on the
-    selected date
+    selected date and model selection.
     """
     date_list = date_input.split("/")
     year = int(date_list[0])
     if year < 2014:
         exp_options = [
             {"label": "Historical Runs", "value": "historical"},
+            {"label": "Preindustrial Control", "value": "piControl"},
+        ]
+    elif mod_drop == "HadGEM3-GC31-MM":
+        exp_options = [
+            {"label": "SSP585", "value": "ssp585"},
             {"label": "Preindustrial Control", "value": "piControl"},
         ]
     else:
