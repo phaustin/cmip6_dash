@@ -136,7 +136,7 @@ def get_cmpi6_model_run(data_store, var_id, mod_id, exp_id="historical"):
     return dset_opened
 
 
-def get_month_and_year(dset, var_id, month, year, layer=1):
+def get_month_and_year(dset, var_id, month, year, piControl=False, layer=1):
     """
     This function filters an xarray dset for a given month, year and layer from
     the cmpi6 historical runs and returns it. It assumes montly data where
@@ -152,7 +152,11 @@ def get_month_and_year(dset, var_id, month, year, layer=1):
         String specifying which month to plot.
         Must be between '01'-'12'. 0 required for single digit months.
     year : 'str'
-        Year to plot. Must be between '1850' and '2014'
+        Year to plot. Must be between '1850' and '2100'
+    piControl : Boolean
+        Set to true if the experimental id was piControl. Year is
+        arbitrary in these cases, so setting this to true will select the first year
+        and then filter only by month.
     layer : int
         Must be between 0 and 18- only used for plotting humidity and temp
 
@@ -161,6 +165,15 @@ def get_month_and_year(dset, var_id, month, year, layer=1):
     var_data : xarray.Dataset
         The xarray.Dataset filtered for the given, month, year, and layer
     """
+    # If piControl is true, we ignore year and instead use the first year in the dset
+    if piControl:
+        year = (
+            dset["time"]  # From the time index
+            .isel(time=slice(0, 1))  # Get the first year
+            .dt.year.values[0]  # Change format to year and grab it
+        )
+        year = str(year)
+
     # Specifying a year and month to select by with xarray
     start_date = year + "-" + month + "-" + "14"
     end_date = year + "-" + month + "-" + "17"
@@ -176,7 +189,7 @@ def get_month_and_year(dset, var_id, month, year, layer=1):
     return var_data
 
 
-def plot_year_plotly(dset, var_id, month, year, layer=1):
+def plot_year_plotly(dset, var_id, month, year, exp_id, layer=1):
 
     """This function plots the var for a given month and year
 
@@ -194,6 +207,8 @@ def plot_year_plotly(dset, var_id, month, year, layer=1):
         Must be between '01'-'12'. 0 required for single digit months.
     year : 'str'
         Year to plot. Must be between '1850' and '2014'
+    exp_id : 'str'
+
     layer : int
         Must be between 0 and 18- only used for plotting humidity and temp
 
@@ -201,8 +216,10 @@ def plot_year_plotly(dset, var_id, month, year, layer=1):
     -------
     fig : plotly figure object
     """
+    # Checking whether the exp_id is piControl so we can tell get_month_and_year
+    is_piControl = exp_id == "piControl"
 
-    var_data = get_month_and_year(dset, var_id, month, year, layer)
+    var_data = get_month_and_year(dset, var_id, month, year, is_piControl, layer)
 
     var_key = get_var_key()
 
@@ -259,7 +276,7 @@ def plot_year_plotly(dset, var_id, month, year, layer=1):
 def plotly_wrapper(
     data_store,
     var_id="tas",
-    mod_id="GFDL-CM4",
+    mod_id="CanESM5",
     exp_id="historical",
     month="01",
     year="1950",
@@ -267,5 +284,5 @@ def plotly_wrapper(
 ):
     """Wraps model request and plotting code for ease of use"""
     dset = get_cmpi6_model_run(data_store, var_id, mod_id, exp_id)
-    fig = plot_year_plotly(dset, var_id, month, year, layer)
+    fig = plot_year_plotly(dset, var_id, month, year, exp_id, layer)
     return fig
