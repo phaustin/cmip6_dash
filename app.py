@@ -45,30 +45,29 @@ mod_options = [
 ]
 
 # Plot displaying heatmap of selected run card
-climate_heatmap_card = dbc.Col(
-    [
-        dcc.Loading(
-            dbc.Card(
-                [
-                    dbc.CardHeader(
-                        "Climate Plot",
-                        style={"fontWeight": "bold"},
-                    ),
-                    dbc.CardBody(
-                        dcc.Graph(
-                            id="histogram",
-                            style={
-                                "border-width": "0",
-                                "width": "100%",
-                                "height": "100%",
-                            },
-                        )
-                    ),
-                ]
-            )
+climate_heatmap_card = [
+    dcc.Loading(
+        dbc.Card(
+            [
+                dbc.CardHeader(
+                    "Climate Plot",
+                    style={"fontWeight": "bold"},
+                ),
+                dbc.CardBody(
+                    dcc.Graph(
+                        id="histogram",
+                        style={
+                            "border-width": "0",
+                            "width": "100%",
+                            "height": "100%",
+                        },
+                    )
+                ),
+            ]
         )
-    ]
-)
+    )
+]
+
 
 # Dropdowns for specifying model run
 dashboard_controls = dbc.Col(
@@ -119,7 +118,7 @@ app.layout = dbc.Container(
                 dbc.Col(
                     [
                         html.H1(
-                            "My splashboard demo",
+                            "CMIP-6 Dashboard",
                             style={
                                 "color": "white",
                                 "text-align": "left",
@@ -140,8 +139,20 @@ app.layout = dbc.Container(
         ),
         dbc.Row(
             [
+                dcc.Tabs(
+                    id="tab_switch",
+                    value="map_tab",
+                    children=[
+                        dcc.Tab(label="Climate Map", value="map_tab"),
+                        dcc.Tab(label="Model Comparison", value="comp_tab"),
+                    ],
+                )
+            ]
+        ),
+        dbc.Row(
+            [
                 dashboard_controls,
-                dbc.Col([dbc.Row([dbc.Col([climate_heatmap_card])])]),
+                dbc.Col(id="tab_switch_content"),
             ]
         ),
         html.Hr(),
@@ -234,6 +245,14 @@ def update_variance(selection):
         var_vals.append(val)
         std = np.std(np.array(var_vals))
     return f"{std:.2e}"
+
+
+@app.callback(Output("tab_switch_content", "children"), Input("tab_switch", "value"))
+def render_content(tab):
+    if tab == "map_tab":
+        return climate_heatmap_card
+    elif tab == "comp_tab":
+        return html.Div([html.H3("Tab content 2")])
 
 
 if __name__ == "__main__":
