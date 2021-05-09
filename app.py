@@ -11,7 +11,9 @@ from dash.dependencies import Input
 from dash.dependencies import Output
 
 from src.a448_lib import data_read
-from src.plot_fcns import plotly_wrapper, plot_model_comparisons, get_var_key
+from src.plot_fcns import get_var_key
+from src.plot_fcns import plot_model_comparisons
+from src.plot_fcns import plotly_wrapper
 
 # Checking to see if the data is already downloaded
 csv_filename = "pangeo-cmip6.csv"
