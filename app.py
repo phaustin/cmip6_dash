@@ -103,6 +103,9 @@ dashboard_controls = dbc.Col(
         html.H6("Model"),
         dcc.Dropdown(id="mod_drop", value="CanESM5", options=mod_options),
         html.Br(),
+        html.H6("Model Comparison"),
+        dcc.Dropdown(id="mod_comp_drop", value="CanESM5", options=mod_options),
+        html.Br(),
         html.H6("Date YYYY/MM"),
         dcc.Input(
             id="date_input",
@@ -216,10 +219,11 @@ def update_map(var_drop, mod_drop, date_input, exp_drop):
     Output("histogram_comparison", "figure"),
     Input("var_drop", "value"),
     Input("mod_drop", "value"),
+    Input("mod_comp_drop", "value"),
     Input("date_input", "value"),
     Input("exp_drop", "value"),
 )
-def update_comparison_hist(var_drop, mod_drop, date_input, exp_drop):
+def update_comparison_hist(var_drop, mod_drop, mod_comp_drop, date_input, exp_drop):
     """
     Updates the model comparison hists
     """
@@ -232,6 +236,7 @@ def update_comparison_hist(var_drop, mod_drop, date_input, exp_drop):
         month=date_list[1],
         year=date_list[0],
         layer=1,
+        mod_comp_id=mod_comp_drop,
     )
     return fig
 
