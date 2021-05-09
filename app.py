@@ -11,8 +11,7 @@ from dash.dependencies import Input
 from dash.dependencies import Output
 
 from src.a448_lib import data_read
-from src.plot_fcns import get_var_key
-from src.plot_fcns import plotly_wrapper
+from src.plot_fcns import plotly_wrapper, plot_model_comparisons, get_var_key
 
 # Checking to see if the data is already downloaded
 csv_filename = "pangeo-cmip6.csv"
@@ -56,6 +55,30 @@ climate_heatmap_card = [
                 dbc.CardBody(
                     dcc.Graph(
                         id="histogram",
+                        style={
+                            "border-width": "0",
+                            "width": "100%",
+                            "height": "100%",
+                        },
+                    )
+                ),
+            ]
+        )
+    )
+]
+
+# Comparison card
+comparison_card = [
+    dcc.Loading(
+        dbc.Card(
+            [
+                dbc.CardHeader(
+                    "Model Comparison",
+                    style={"fontWeight": "bold"},
+                ),
+                dbc.CardBody(
+                    dcc.Graph(
+                        id="histogram_comparison",
                         style={
                             "border-width": "0",
                             "width": "100%",
@@ -144,7 +167,7 @@ app.layout = dbc.Container(
                     value="map_tab",
                     children=[
                         dcc.Tab(label="Climate Map", value="map_tab"),
-                        dcc.Tab(label="Model Comparison", value="comp_tab"),
+                        dcc.Tab(label="Compare", value="comp_tab"),
                     ],
                 )
             ]
@@ -171,10 +194,35 @@ app.layout = dbc.Container(
 )
 def update_map(var_drop, mod_drop, date_input, exp_drop):
     """
-    Updates the graph when the a different variable is selected
+    Updates the climate map graph when the a different variable is selected
     """
     date_list = date_input.split("/")
     fig = plotly_wrapper(
+        col,
+        var_drop,
+        mod_drop,
+        exp_drop,
+        month=date_list[1],
+        year=date_list[0],
+        layer=1,
+    )
+    return fig
+
+
+# Callbacks
+@app.callback(
+    Output("histogram_comparison", "figure"),
+    Input("var_drop", "value"),
+    Input("mod_drop", "value"),
+    Input("date_input", "value"),
+    Input("exp_drop", "value"),
+)
+def update_comparison_hist(var_drop, mod_drop, date_input, exp_drop):
+    """
+    Updates the model comparison hists
+    """
+    date_list = date_input.split("/")
+    fig = plot_model_comparisons(
         col,
         var_drop,
         mod_drop,
@@ -252,7 +300,7 @@ def render_content(tab):
     if tab == "map_tab":
         return climate_heatmap_card
     elif tab == "comp_tab":
-        return html.Div([html.H3("Tab content 2")])
+        return comparison_card
 
 
 if __name__ == "__main__":

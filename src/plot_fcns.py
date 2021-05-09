@@ -3,6 +3,7 @@ import fsspec
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+import pandas as pd
 import xarray as xr
 
 
@@ -136,7 +137,7 @@ def get_cmpi6_model_run(data_store, var_id, mod_id, exp_id="historical"):
     return dset_opened
 
 
-def get_month_and_year(dset, var_id, month, year, piControl=False, layer=1):
+def get_month_and_year(dset, var_id, month, year, exp_id="historical", layer=1):
     """
     This function filters an xarray dset for a given month, year and layer from
     the cmpi6 historical runs and returns it. It assumes montly data where
@@ -153,10 +154,9 @@ def get_month_and_year(dset, var_id, month, year, piControl=False, layer=1):
         Must be between '01'-'12'. 0 required for single digit months.
     year : 'str'
         Year to plot. Must be between '1850' and '2100'
-    piControl : Boolean
-        Set to true if the experimental id was piControl. Year is
-        arbitrary in these cases, so setting this to true will select the first year
-        and then filter only by month.
+    piControl : 'str'
+        The exp_id. Required here because year should be ignored for
+        piControl model runs.
     layer : int
         Must be between 0 and 18- only used for plotting humidity and temp
 
@@ -165,8 +165,9 @@ def get_month_and_year(dset, var_id, month, year, piControl=False, layer=1):
     var_data : xarray.Dataset
         The xarray.Dataset filtered for the given, month, year, and layer
     """
-    # If piControl is true, we ignore year and instead use the first year in the dset
-    if piControl:
+    # If out experiment ID is piControl, we ignore year and instead use the first
+    #  year in the dset
+    if exp_id == "piControl":
         year = (
             dset["time"]  # From the time index
             .isel(time=slice(0, 1))  # Get the first year
@@ -217,9 +218,7 @@ def plot_year_plotly(dset, var_id, month, year, exp_id, layer=1):
     fig : plotly figure object
     """
     # Checking whether the exp_id is piControl so we can tell get_month_and_year
-    is_piControl = exp_id == "piControl"
-
-    var_data = get_month_and_year(dset, var_id, month, year, is_piControl, layer)
+    var_data = get_month_and_year(dset, var_id, month, year, exp_id, layer)
 
     var_key = get_var_key()
 
@@ -270,6 +269,23 @@ def plot_year_plotly(dset, var_id, month, year, exp_id, layer=1):
         title=var_key[var_id]["fullname"] + " " + year + "-" + month,
     )
 
+    return fig
+
+
+def plot_model_comparisons(
+    dset, var_id, mod_id, exp_id, month, year, layer, mod_comp_id="CanESM5"
+):
+    filt_dset = get_cmpi6_model_run(dset, var_id, mod_id, exp_id)
+    filt_dset = get_month_and_year(filt_dset, var_id, month, year, exp_id)
+    df = filt_dset.to_dataframe().reset_index()
+    dset_comp = get_cmpi6_model_run(dset, var_id, mod_comp_id, exp_id)
+    dset_comp = get_month_and_year(dset_comp, var_id, month, year, exp_id)
+    df_comp = dset_comp.to_dataframe().reset_index()
+    df_comp = df_comp.rename({var_id: mod_comp_id}, axis=1)[[mod_comp_id]]
+    df = df.rename({var_id: mod_id}, axis=1)[[mod_id]]
+    uni_df = pd.concat([df, df_comp], axis=1)
+    uni_df = uni_df.melt(var_name="model")
+    fig = px.histogram(uni_df, x="value", color="model", opacity=0.5)
     return fig
 
 
