@@ -1,9 +1,9 @@
 import cartopy.feature as cf
 import fsspec
 import numpy as np
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import pandas as pd
 import xarray as xr
 
 
@@ -113,7 +113,7 @@ def get_cmpi6_model_run(data_store, var_id, mod_id, exp_id="historical"):
 
     Returns
     -------
-    dset_opened : xarray.Datasfet
+    dset_opened : xarray.Dataset
         The xarray object matching the query
     """
 
@@ -275,16 +275,23 @@ def plot_year_plotly(dset, var_id, month, year, exp_id, layer=1):
 def plot_model_comparisons(
     dset, var_id, mod_id, exp_id, month, year, layer, mod_comp_id="CanESM5"
 ):
+    # Get a df with the corresponding var_id etc. for the first model
     filt_dset = get_cmpi6_model_run(dset, var_id, mod_id, exp_id)
-    filt_dset = get_month_and_year(filt_dset, var_id, month, year, exp_id)
+    filt_dset = get_month_and_year(filt_dset, var_id, month, year, exp_id, layer)
     df = filt_dset.to_dataframe().reset_index()
+
+    # Get a df with the corresponding var_id etc. for the second model
     dset_comp = get_cmpi6_model_run(dset, var_id, mod_comp_id, exp_id)
-    dset_comp = get_month_and_year(dset_comp, var_id, month, year, exp_id)
+    dset_comp = get_month_and_year(dset_comp, var_id, month, year, exp_id, layer)
     df_comp = dset_comp.to_dataframe().reset_index()
+
+    # Changing the column labels on the var_ids to be the model ids so we can melt
     df_comp = df_comp.rename({var_id: mod_comp_id}, axis=1)[[mod_comp_id]]
     df = df.rename({var_id: mod_id}, axis=1)[[mod_id]]
     uni_df = pd.concat([df, df_comp], axis=1)
     uni_df = uni_df.melt(var_name="model")
+
+    # Plotting counts of different values against each ohter
     fig = px.histogram(uni_df, x="value", color="model", opacity=0.5)
     return fig
 
@@ -302,3 +309,126 @@ def plotly_wrapper(
     dset = get_cmpi6_model_run(data_store, var_id, mod_id, exp_id)
     fig = plot_year_plotly(dset, var_id, month, year, exp_id, layer)
     return fig
+
+
+def create_case(
+    data_store, case_definition, definition_path="None", xarr_write_path="None"
+):
+
+    """Queries a given data store for the specification and returns and writes the data
+
+    Wraps a query for the data_store to get the xarray. Variable id must be supported
+    by get_monthly_table_for_var(). Data is written in the xarr format
+
+    Parameters
+    ----------
+    data_store : esm_datastore
+        The data store to query
+
+    case_definition : dict
+        This dict specifies the region, variable time period, scenario, and number of
+        ensemble members. Write_case_definitions will generate and validate an
+        appropriate dict.
+
+    definition_path : str
+        Ignored if a case_definition is provided or if set to none. The name of a case
+        saved as a json to fetch to use as the case definition
+
+    xarr_write_path : str
+        Ignored if xarr_write_path is set to none. The location
+
+
+    Returns
+    -------
+    xarr_file : xarr
+        The dataset object for the given query
+    """
+    pass
+
+
+def get_case_data(xarr_read_path="None"):
+    """
+    Grabs the xarr data from storage and returns an xarray dataset
+
+    Parameters
+    ----------
+    data_store : esm_datastore
+        The data store to query
+
+    case_definition : dict
+        This dict specifies the region, variable time period, scenario, and number of
+        ensemble members. Write_case_definitions will generate and validate an
+        appropriate dict.
+
+    definition_path : str
+        Ignored if a case_definition is provided or if set to none. The name of a
+        case saved as a json to fetch to use as the case definition
+
+    xarr_write_path : str
+        Ignored if xarr_write_path is set to none. The location write the xarr file
+        after data munging.
+
+
+    Returns
+    -------
+    xarr_file : xarr
+        The dataset object for the given query
+    """
+
+
+def write_case_definition(
+    var_id,
+    mod_id,
+    exp_id,
+    members,
+    start_date,
+    end_date,
+    top_left,
+    bottom_right,
+    write_path="None",
+):
+    """
+    This function creates and validates a dictionary to use with get_case and writes
+    the definition to a json if a write path is supplied
+
+    Parameters
+    ----------
+    write_path : str
+         The path to write a json of the case definition for. This will overwrite case
+         definitions with the same name. If 'None' specified, the case definition will
+         not be saved as a json
+
+    var_id : str
+         The variable id to use in the query. Must be a member of dict supplied by
+         get_var_key()
+
+    mod_id : str
+         The model id to query results for. Must be a valid cimp6 model id
+
+    exp_id : str
+         The experiment id. Must be valid for the mod_id and var_id
+
+    members : int
+        Number of model runs to include in case xarr dataset. Should be between 0 and 39
+
+    start_date : '1950-01'
+        Start of the date range- check these dates are contained in the given runs of
+        the given experiment. Ignored for piControl.
+
+    end_date : '1955-02'
+        End of the date range check these dates are contained in the given runs of the
+        given experiment. Ignored for piControl.
+
+    top_left : str
+        Top left lat-lon coord for regional subselection
+
+    bottom_right : str
+        Bottom right lat-lon coord for regional subselection
+
+    Returns
+    -------
+    case_definition : dict
+        A dictionary with all the requests validated
+
+    """
+    pass
