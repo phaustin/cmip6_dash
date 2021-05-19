@@ -92,7 +92,7 @@ def get_outline(fig):
     return fig
 
 
-def get_cmpi6_model_run(data_store, var_id, mod_id, exp_id="historical"):
+def get_cmpi6_model_run(data_store, var_id, mod_id, exp_id="historical", members=1):
     """Queries a given data store for historical model runs for the given variable id
 
     Wraps a query for the data_store using variable and model id
@@ -113,8 +113,8 @@ def get_cmpi6_model_run(data_store, var_id, mod_id, exp_id="historical"):
 
     Returns
     -------
-    dset_opened : xarray.Dataset
-        The xarray object matching the query
+    dsets : list
+       A list of the xarray datasets matching the query
     """
 
     # Querying datastore to get xarr file
@@ -127,14 +127,16 @@ def get_cmpi6_model_run(data_store, var_id, mod_id, exp_id="historical"):
 
     datasets = data_store.search(**query_variable_id)
 
+    dsets = []
     # Getting the member number for the first experiment
-    first_member_id = datasets.df["member_id"][0]
+    for member_num in range(members):
+        member_ids = datasets.df["member_id"][member_num]
+        dstore_filename = datasets.df.query("member_id==@member_ids")["zstore"].iloc[0]
+        dsets.append(
+            xr.open_zarr(fsspec.get_mapper(dstore_filename), consolidated=True)
+        )
 
-    dstore_filename = datasets.df.query("member_id==@first_member_id")["zstore"].iloc[0]
-
-    dset_opened = xr.open_zarr(fsspec.get_mapper(dstore_filename), consolidated=True)
-
-    return dset_opened
+    return dsets
 
 
 def get_month_and_year(dset, var_id, month, year, exp_id="historical", layer=1):
@@ -306,7 +308,7 @@ def plotly_wrapper(
     layer=1,
 ):
     """Wraps model request and plotting code for ease of use"""
-    dset = get_cmpi6_model_run(data_store, var_id, mod_id, exp_id)
+    dset = get_cmpi6_model_run(data_store, var_id, mod_id, exp_id)[0]
     fig = plot_year_plotly(dset, var_id, month, year, exp_id, layer)
     return fig
 
@@ -335,7 +337,8 @@ def create_case(
         saved as a json to fetch to use as the case definition
 
     xarr_write_path : str
-        Ignored if xarr_write_path is set to none. The location
+        Ignored if xarr_write_path is set to none. The location the file will be
+        written.
 
 
     Returns
