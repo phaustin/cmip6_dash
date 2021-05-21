@@ -1,7 +1,8 @@
+import json
+
 import cartopy.feature as cf
 import fsspec
 import numpy as np
-import json
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
