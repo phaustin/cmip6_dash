@@ -1,6 +1,7 @@
 import cartopy.feature as cf
 import fsspec
 import numpy as np
+import json
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -320,9 +321,7 @@ def plotly_wrapper(
     return fig
 
 
-def create_case(
-    data_store, case_definition, definition_path="None", xarr_write_path="None"
-):
+def get_case_data(data_store, case_definition, xarr_write_path="None"):
 
     """Queries a given data store for the specification and returns and writes the data
 
@@ -350,40 +349,59 @@ def create_case(
 
     Returns
     -------
-    xarr_file : xarr
-        The dataset object for the given query
+    xarr_file : list of xarrary dsets
+        The experiment for the given query in a list
     """
-    pass
+    dsets = get_cmpi6_model_run(
+        data_store,
+        case_definition["var_id"],
+        case_definition["mod_id"],
+        case_definition["exp_id"],
+        case_definition["members"],
+    )
+
+    bottom_lat_bnd = case_definition["bottom_right"][0]
+    top_lat_bnd = case_definition["top_left"][0]
+    right_lon_bnd = case_definition["bottom_right"][1]
+    left_lon_bnd = case_definition["top_left"][1]
+
+    # TODO: Filter on dates
+
+    dsets_clipped = [
+        clip_xarray(
+            dset, top_lat_bnd, bottom_lat_bnd, right_lon_bnd, left_lon_bnd, lon_360=True
+        )
+        for dset in dsets
+    ]
 
 
-def get_case_data(xarr_read_path="None"):
-    """
-    Grabs the xarr data from storage and returns an xarray dataset
+def clip_xarray(
+    xarray_dset,
+    top_lat_bnd,
+    bottom_lat_bnd,
+    right_lon_bnd,
+    left_lon_bnd,
+    lon_padding=3,
+    lat_padding=3,
+    lons_360=False,
+):
+    """Takes an xarray_dataset and clips values to a square defined by the lat lon
+    values supplied"""
+    if not lons_360:
+        right_lon_bnd = lon_180_to_360(right_lon_bnd)
+        left_lon_bnd = lon_180_to_360(left_lon_bnd)
+    return (
+        xarray_dset.where(xarray_dset.lat > bottom_lat_bnd - lat_padding, drop=True)
+        .where(xarray_dset.lat < top_lat_bnd + lat_padding, drop=True)
+        .where(xarray_dset.lon < right_lon_bnd + lon_padding, drop=True)
+        .where(xarray_dset.lon > left_lon_bnd - lon_padding, drop=True)
+    )
 
-    Parameters
-    ----------
-    data_store : esm_datastore
-        The data store to query
 
-    case_definition : dict
-        This dict specifies the region, variable time period, scenario, and number of
-        ensemble members. Write_case_definitions will generate and validate an
-        appropriate dict.
-
-    definition_path : str
-        Ignored if a case_definition is provided or if set to none. The name of a
-        case saved as a json to fetch to use as the case definition
-
-    xarr_write_path : str
-        Ignored if xarr_write_path is set to none. The location write the xarr file
-        after data munging.
-
-
-    Returns
-    -------
-    xarr_file : xarr
-        The dataset object for the given query
-    """
+def lon_180_to_360(lon):
+    """Converts longitudes on the -180-180 scale to 0-365"""
+    lon = lon + 360 if lon < 0 else lon
+    return lon
 
 
 def write_case_definition(
@@ -395,6 +413,7 @@ def write_case_definition(
     end_date,
     top_left,
     bottom_right,
+    padding=3,
     write_path="None",
 ):
     """
@@ -421,19 +440,24 @@ def write_case_definition(
     members : int
         Number of model runs to include in case xarr dataset. Should be between 0 and 39
 
-    start_date : '1950-01'
-        Start of the date range- check these dates are contained in the given runs of
-        the given experiment. Ignored for piControl.
+    start_date : str '1950-01'
+        Of the form YYYY-MM e.g '1955-02'. Start of the date range- check these dates
+        are contained in the given runs of the given experiment. Ignored for piControl.
 
-    end_date : '1955-02'
-        End of the date range check these dates are contained in the given runs of the
-        given experiment. Ignored for piControl.
+    end_date : str '1955-02'
+        Of the form YYYY-MM e.g '1955-02'. End of the date range check these dates are
+        contained in the given runs of the given experiment. Ignored for piControl.
 
-    top_left : str
-        Top left lat-lon coord for regional subselection
+    top_left : tuple (float, float)
+        Top left lat-lon coord for regional subselection. Should be decimal of the form
+        Lat -90-90, Lon 0-360
 
-    bottom_right : str
-        Bottom right lat-lon coord for regional subselection
+    bottom_right : tuple (float, float)
+        Bottom right lat-lon coord for regional subselection. Should be decimal of the
+        form lat -90-90, Lon 0-360
+
+    write_path : str
+        The file path to write the json to. Could be of the form
 
     Returns
     -------
@@ -441,4 +465,30 @@ def write_case_definition(
         A dictionary with all the requests validated
 
     """
-    pass
+    # TODO: Write script to validate input
+    # Var id should be in var_keys
+    # Mod id should be in [CanESM5 etc]
+    # The exp id must be one of ['historical', 'piControl', other opts]
+    # Members should be less than 40
+    # The start date must be compatible with the exp id (1850-2014 for historical),
+    # 2014 on for pi
+    # Same with end date
+    # The lats should correspond to Amon gridding (see above)
+    case_definition = {
+        "var_id": var_id,
+        "mod_id": mod_id,
+        "exp_id": exp_id,
+        "members": members,
+        "start_date": start_date,
+        "end_date": end_date,
+        "top_left": top_left,
+        "bottom_right": bottom_right,
+        "padding": padding,
+    }
+
+    case_definition["data"] = get_case_data(case_definition)
+    if write_path != "None":
+        with open(write_path, "w") as write_file:
+            json.dump(case_definition, write_file, sort_keys=True, indent=4)
+    else:
+        return case_definition

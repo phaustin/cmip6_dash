@@ -94,7 +94,7 @@ comparison_card = [
 ]
 
 
-# Dropdowns for specifying model run
+# Dropdowns for specifying contents of the graphs
 dashboard_controls = dbc.Col(
     [
         html.H6("Model Variable"),
