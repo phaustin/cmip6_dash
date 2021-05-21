@@ -219,7 +219,6 @@ def plot_year_plotly(dset, var_id, month, year, exp_id, layer=1):
     -------
     fig : plotly figure object
     """
-    # Checking whether the exp_id is piControl so we can tell get_month_and_year
     var_data = get_month_and_year(dset, var_id, month, year, exp_id, layer)
 
     var_key = get_var_key()
@@ -263,8 +262,16 @@ def plot_year_plotly(dset, var_id, month, year, exp_id, layer=1):
             },
         )
     )
-    fig.update_xaxes(range=[-180, 180], showticklabels=False, visible=False)
-    fig.update_yaxes(range=[-90, 90], showticklabels=False, visible=False)
+    fig.update_xaxes(
+        range=[var_df["lon_adj"].min(), var_df["lon_adj"].max()],
+        showticklabels=False,
+        visible=False,
+    )
+    fig.update_yaxes(
+        range=[var_df["lat"].min(), var_df["lat"].max()],
+        showticklabels=False,
+        visible=False,
+    )
 
     fig.update_layout(
         margin={"r": 0, "t": 0, "l": 0, "b": 0},
