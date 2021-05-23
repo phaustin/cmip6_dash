@@ -377,8 +377,10 @@ def get_case_data(data_store, case_definition, write_path="None"):
     for index in range(len(dsets_clipped)):
         dsets_clipped[index] = dsets_clipped[index].assign_coords(member_num=index)
 
+    concat_sets = xr.concat(dsets_clipped, dim="member_num")
+
     if write_path != "None":
-        dsets_clipped.to_netcdf(write_path)
+        concat_sets.to_netcdf(write_path)
     else:
         return case_definition
 
@@ -413,7 +415,7 @@ def lon_180_to_360(lon):
 
 
 def write_case_definition(
-    data_store,
+    case_name,
     var_id,
     mod_id,
     exp_id,
@@ -422,7 +424,6 @@ def write_case_definition(
     end_date,
     top_left,
     bottom_right,
-    padding=3,
     write_path="None",
 ):
     """
@@ -465,6 +466,9 @@ def write_case_definition(
         Bottom right lat-lon coord for regional subselection. Should be decimal of the
         form lat -90-90, Lon 0-360
 
+    padding : int
+        Amount of space to include in plotting
+
     write_path : str
         The file path + file name for writing the json
 
@@ -484,6 +488,7 @@ def write_case_definition(
     # Same with end date
     # The lats should correspond to Amon gridding (see above)
     case_definition = {
+        "case_name": case_name,
         "var_id": var_id,
         "mod_id": mod_id,
         "exp_id": exp_id,
@@ -492,13 +497,10 @@ def write_case_definition(
         "end_date": end_date,
         "top_left": top_left,
         "bottom_right": bottom_right,
-        "padding": padding,
-        "data": [],
     }
 
-    case_definition["data"] = get_case_data(data_store, case_definition)
     if write_path != "None":
         with open(write_path, "w") as write_file:
-            json.dump(case_definition, write_file, sort_keys=True, indent=4)
+            json.dump(case_definition, write_file, indent=4)
     else:
         return case_definition
