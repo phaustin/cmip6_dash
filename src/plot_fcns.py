@@ -322,7 +322,7 @@ def plotly_wrapper(
     return fig
 
 
-def get_case_data(data_store, case_definition, xarr_write_path="None"):
+def get_case_data(data_store, case_definition, write_path="None"):
 
     """Queries a given data store for the specification and returns and writes the data
 
@@ -339,13 +339,9 @@ def get_case_data(data_store, case_definition, xarr_write_path="None"):
         ensemble members. Write_case_definitions will generate and validate an
         appropriate dict.
 
-    definition_path : str
-        Ignored if a case_definition is provided or if set to none. The name of a case
-        saved as a json to fetch to use as the case definition
-
-    xarr_write_path : str
-        Ignored if xarr_write_path is set to none. The location the file will be
-        written.
+    write_path : str
+        Ignored if xarr_write_path is set to none. Path where the netCDF file with
+        case data will be written.
 
 
     Returns
@@ -366,14 +362,25 @@ def get_case_data(data_store, case_definition, xarr_write_path="None"):
     right_lon_bnd = case_definition["bottom_right"][1]
     left_lon_bnd = case_definition["top_left"][1]
 
-    # TODO: Filter on dates
-
     dsets_clipped = [
         clip_xarray(
-            dset, top_lat_bnd, bottom_lat_bnd, right_lon_bnd, left_lon_bnd, lon_360=True
+            dset,
+            top_lat_bnd,
+            bottom_lat_bnd,
+            right_lon_bnd,
+            left_lon_bnd,
+            lons_360=False,
         ).sel(time=slice(case_definition["start_date"], case_definition["end_date"]))
         for dset in dsets
     ]
+
+    for index in range(len(dsets_clipped)):
+        dsets_clipped[index] = dsets_clipped[index].assign_coords(member_num=index)
+
+    if write_path != "None":
+        dsets_clipped.to_netcdf(write_path)
+    else:
+        return case_definition
 
 
 def clip_xarray(
@@ -406,6 +413,7 @@ def lon_180_to_360(lon):
 
 
 def write_case_definition(
+    data_store,
     var_id,
     mod_id,
     exp_id,
@@ -485,9 +493,10 @@ def write_case_definition(
         "top_left": top_left,
         "bottom_right": bottom_right,
         "padding": padding,
+        "data": [],
     }
 
-    case_definition["data"] = get_case_data(case_definition)
+    case_definition["data"] = get_case_data(data_store, case_definition)
     if write_path != "None":
         with open(write_path, "w") as write_file:
             json.dump(case_definition, write_file, sort_keys=True, indent=4)
