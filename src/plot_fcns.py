@@ -371,7 +371,7 @@ def get_case_data(data_store, case_definition, xarr_write_path="None"):
     dsets_clipped = [
         clip_xarray(
             dset, top_lat_bnd, bottom_lat_bnd, right_lon_bnd, left_lon_bnd, lon_360=True
-        )
+        ).sel(time=slice(case_definition["start_date"], case_definition["end_date"]))
         for dset in dsets
     ]
 
@@ -458,7 +458,7 @@ def write_case_definition(
         form lat -90-90, Lon 0-360
 
     write_path : str
-        The file path to write the json to. Could be of the form
+        The file path + file name for writing the json
 
     Returns
     -------
