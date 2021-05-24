@@ -1,3 +1,5 @@
+import os
+import re
 from pathlib import Path
 
 import dash
@@ -32,6 +34,14 @@ catalog_df = pd.read_csv(csv_filename)
 col = intake.open_esm_datastore(json_filename)
 
 var_key = get_var_key()
+
+# Getting the names of the cases for the dropdown
+path = "cases/"
+cases = os.listdir(path)
+cases = [case for case in cases if re.search(r".json$", case)]
+case_defs = []
+for case in cases:
+    case_defs.append({"label": case, "value": case})
 
 # Creating object with all variable full names for dropdown
 full_name_key = []
@@ -97,6 +107,9 @@ comparison_card = [
 # Dropdowns for specifying contents of the graphs
 dashboard_controls = dbc.Col(
     [
+        html.H6("Scenario"),
+        dcc.Dropdown(id="scenario_drop", value="None", options=case_defs),
+        html.Br(),
         html.H6("Model Variable"),
         dcc.Dropdown(id="var_drop", value="tas", options=full_name_key),
         html.Br(),
