@@ -1,9 +1,17 @@
-import intake
-from pathlib import Path
-from a448_lib import data_read
-from plot_fcns import write_case_definition
-from plot_fcns import get_case_data
 import json
+import os
+from pathlib import Path
+
+import intake
+from plot_fcns import get_case_data
+from plot_fcns import write_case_definition
+
+from a448_lib import data_read
+
+case_file_path = "cases/"
+
+if not os.path.isdir(case_file_path):
+    os.mkdir(case_file_path)
 
 
 csv_filename = "pangeo-cmip6.csv"
@@ -31,10 +39,10 @@ write_case_definition(
     "1955-02",
     (60, -139.05),
     (49, -114.068333),
-    "../cases/bc_tas_2.json",
+    (case_file_path + "bc_tas_2.json"),
 )
 
-with open("../cases/bc_tas_2.json") as f:
+with open((case_file_path + "bc_tas_2.json")) as f:
     data = json.load(f)
 
-get_case_data(col, data, write_path="../cases/bc_tas_2.nc")
+get_case_data(col, data, write_path=(case_file_path + "bc_tas_2.nc"))
