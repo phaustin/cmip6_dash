@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from pathlib import Path
@@ -9,12 +10,16 @@ import dash_html_components as html
 import intake
 import numpy as np
 import pandas as pd
+import xarray as xr
 from dash.dependencies import Input
 from dash.dependencies import Output
+from dash.exceptions import PreventUpdate
+
 
 from src.a448_lib import data_read
 from src.plot_fcns import get_var_key
 from src.plot_fcns import plot_model_comparisons
+from src.plot_fcns import plot_year_plotly
 from src.plot_fcns import plotly_wrapper
 
 # Checking to see if the data is already downloaded
@@ -39,7 +44,7 @@ var_key = get_var_key()
 path = "cases/"
 cases = os.listdir(path)
 cases = [case for case in cases if re.search(r".json$", case)]
-case_defs = []
+case_defs = [{"label": "None", "value": "None"}]
 for case in cases:
     case_defs.append({"label": case, "value": case})
 
@@ -123,7 +128,7 @@ dashboard_controls = dbc.Col(
         dcc.Input(
             id="date_input",
             value="1975/02",
-            debounce=True,
+            # debounce=True,
             style={"border-width": "0", "width": "100%"},
         ),
         html.Br(),
@@ -205,25 +210,40 @@ app.layout = dbc.Container(
 # Callbacks
 @app.callback(
     Output("histogram", "figure"),
+    Input("scenario_drop", "value"),
     Input("var_drop", "value"),
     Input("mod_drop", "value"),
     Input("date_input", "value"),
     Input("exp_drop", "value"),
 )
-def update_map(var_drop, mod_drop, date_input, exp_drop):
+def update_map(scenario_drop, var_drop, mod_drop, date_input, exp_drop):
     """
     Updates the climate map graph when the a different variable is selected
     """
     date_list = date_input.split("/")
-    fig = plotly_wrapper(
-        col,
-        var_drop,
-        mod_drop,
-        exp_drop,
-        month=date_list[1],
-        year=date_list[0],
-        layer=1,
-    )
+    if scenario_drop == "None":
+        date_list = date_input.split("/")
+        fig = plotly_wrapper(
+            col,
+            var_drop,
+            mod_drop,
+            exp_drop,
+            month=date_list[1],
+            year=date_list[0],
+            layer=1,
+        )
+    else:
+        with open(path + scenario_drop) as f:
+            data = json.load(f)
+        dset = xr.open_dataset(path + scenario_drop.split(".")[0] + ".nc")
+        fig = plot_year_plotly(
+            dset.sel({"member_num": 0}),
+            data["var_id"],
+            month=date_list[1],
+            year=date_list[0],
+            exp_id=data["exp_id"],
+            layer=1,
+        )
     return fig
 
 
@@ -321,6 +341,21 @@ def render_content(tab):
         return climate_heatmap_card
     elif tab == "comp_tab":
         return comparison_card
+
+
+@app.callback(
+    Output("date_input", "value"),
+    Input("scenario_drop", "value"),
+)
+def update_date_for_case(scenario_drop):
+    if scenario_drop == "None":
+        raise PreventUpdate
+    # if scenario_drop != "None":
+    with open(path + scenario_drop) as f:
+        data = json.load(f)
+    start_dates = data["start_date"].split("-")
+    start_date = start_dates[0] + "/" + start_dates[1]
+    return start_date
 
 
 if __name__ == "__main__":
