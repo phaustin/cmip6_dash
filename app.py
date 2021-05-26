@@ -15,7 +15,6 @@ from dash.dependencies import Input
 from dash.dependencies import Output
 from dash.exceptions import PreventUpdate
 
-
 from src.a448_lib import data_read
 from src.plot_fcns import get_var_key
 from src.plot_fcns import plot_model_comparisons
