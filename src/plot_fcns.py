@@ -503,34 +503,56 @@ def write_case_definition(
         var_key[var_id]
     except KeyError:
         print(f"var id should be one of {get_var_key().keys()}")
+        raise KeyError
     # Mod id should be one in the model key dict
     try:
         mod_key[mod_id]
     except KeyError:
         print(f"mod id should be one of {mod_key.keys()}")
+        raise KeyError
     # The exp id must be one of the scenarios or controls for the model
     model_opts = mod_key[mod_id]["scenarios"] + mod_key[mod_id]["controls"]
-    if exp_id not in model_opts:
+    try:
+        if exp_id not in model_opts:
+            raise AssertionError
+    except AssertionError:
         print(f"experiment id should be one of {model_opts} for {mod_id}")
+        raise AssertionError
+
     # Members should be less than 40
     if members > 40:
         print(f"{members} is too many members")
+        raise AssertionError
     # The start date must be compatible with the exp id (1850-2014 for historical),
     start_date_split = start_date.split("-")
+    start_date_split = [int(date) for date in start_date_split]
     end_date_split = end_date.split("-")
+    end_date_split = [int(date) for date in end_date_split]
+
     if exp_id == "historical":
-        if not start_date_split[0] >= 1850 and start_date_split[0] <= 2014:
+        if not (start_date_split[0] >= 1850 and start_date_split[0] <= 2014):
             print("historical runs range from 1850 to 2014")
-        if not end_date_split[0] >= 1850 and end_date_split[0] <= 2014:
+            raise AssertionError
+        if not (end_date_split[0] >= 1850 and end_date_split[0] <= 2014):
             print("historical runs range from 1850 to 2014")
+            raise AssertionError
+    if exp_id in mod_key[mod_id]["scenarios"]:
+        if not start_date_split[0] >= 2015 and start_date_split[0] <= 2100:
+            print("historical runs range from 1850 to 2014")
+            raise AssertionError
+        if not end_date_split[0] >= 2015 and end_date_split[0] <= 2100:
+            print("historical runs range from 1850 to 2014")
+            raise AssertionError
     lats = [top_left[0], bottom_right[0]]
     for lat in lats:
         if abs(lat) > 90:
             print(f"{lat} is not between -90 and 90!")
+            raise AssertionError
     lons = [top_left[1], bottom_right[1]]
     for lon in lons:
         if abs(lon) > 180:
             print(f"{lon} is not between -180 and 180!")
+            raise AssertionError
 
     # 2014 on for pi
     # Same with end date
