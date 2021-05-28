@@ -62,6 +62,24 @@ def get_var_key():
     return var_key
 
 
+def get_model_key():
+    model_keys = {
+        "CanESM5": {
+            "scenarios": ["ssp585", "ssp245"],
+            "controls": ["historical", "piControl"],
+        },
+        "HadGEM3-GC31-MM": {
+            "scenarios": ["ssp585"],
+            "controls": ["historical", "piControl"],
+        },
+        "CESM2": {
+            "scenarios": ["ssp585", "ssp245"],
+            "controls": ["historical", "piControl"],
+        },
+    }
+    return model_keys
+
+
 def get_models_with_var(data_store, var_id, table_id):
     """Takes a variable id and a corresponding table id and and returns all the model labels
     with the combination"""
@@ -460,11 +478,11 @@ def write_case_definition(
 
     top_left : tuple (float, float)
         Top left lat-lon coord for regional subselection. Should be decimal of the form
-        Lat -90-90, Lon 0-360
+        Lat -90-90, Lon -180-180
 
     bottom_right : tuple (float, float)
         Bottom right lat-lon coord for regional subselection. Should be decimal of the
-        form lat -90-90, Lon 0-360
+        form lat -90-90, Lon -180-180
 
     padding : int
         Amount of space to include in plotting
@@ -478,12 +496,42 @@ def write_case_definition(
         A dictionary with all the requests validated
 
     """
-    # TODO: Write script to validate input
     # Var id should be in var_keys
-    # Mod id should be in [CanESM5 etc]
-    # The exp id must be one of ['historical', 'piControl', other opts]
+    mod_key = get_model_key()
+    try:
+        var_key = get_var_key()
+        var_key[var_id]
+    except KeyError:
+        print(f"var id should be one of {get_var_key().keys()}")
+    # Mod id should be one in the model key dict
+    try:
+        mod_key[mod_id]
+    except KeyError:
+        print(f"mod id should be one of {mod_key.keys()}")
+    # The exp id must be one of the scenarios or controls for the model
+    model_opts = mod_key[mod_id]["scenarios"] + mod_key[mod_id]["controls"]
+    if exp_id not in model_opts:
+        print(f"experiment id should be one of {model_opts} for {mod_id}")
     # Members should be less than 40
+    if members > 40:
+        print(f"{members} is too many members")
     # The start date must be compatible with the exp id (1850-2014 for historical),
+    start_date_split = start_date.split("-")
+    end_date_split = end_date.split("-")
+    if exp_id == "historical":
+        if not start_date_split[0] >= 1850 and start_date_split[0] <= 2014:
+            print("historical runs range from 1850 to 2014")
+        if not end_date_split[0] >= 1850 and end_date_split[0] <= 2014:
+            print("historical runs range from 1850 to 2014")
+    lats = [top_left[0], bottom_right[0]]
+    for lat in lats:
+        if abs(lat) > 90:
+            print(f"{lat} is not between -90 and 90!")
+    lons = [top_left[1], bottom_right[1]]
+    for lon in lons:
+        if abs(lon) > 180:
+            print(f"{lon} is not between -180 and 180!")
+
     # 2014 on for pi
     # Same with end date
     # The lats should correspond to Amon gridding (see above)
