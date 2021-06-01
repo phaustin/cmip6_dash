@@ -20,6 +20,7 @@ from src.plot_fcns import get_var_key
 from src.plot_fcns import plot_model_comparisons
 from src.plot_fcns import plot_year_plotly
 from src.plot_fcns import plotly_wrapper
+from src.plot_fcns import plot_member_line_comp
 
 # Checking to see if the data is already downloaded
 csv_filename = "pangeo-cmip6.csv"
@@ -83,29 +84,51 @@ climate_heatmap_card = [
     )
 ]
 
-# Comparison card
-comparison_card = [
-    dcc.Loading(
-        dbc.Card(
-            [
-                dbc.CardHeader(
-                    "Model Comparison",
-                    style={"fontWeight": "bold"},
-                ),
-                dbc.CardBody(
-                    dcc.Graph(
-                        id="histogram_comparison",
-                        style={
-                            "border-width": "0",
-                            "width": "100%",
-                            "height": "100%",
-                        },
-                    )
-                ),
-            ]
-        )
-    )
-]
+# Comparison tab
+comp_tab_contents = dbc.Col(
+    [
+        dcc.Loading(
+            dbc.Card(
+                [
+                    dbc.CardHeader(
+                        "Model Comparison",
+                        style={"fontWeight": "bold"},
+                    ),
+                    dbc.CardBody(
+                        dcc.Graph(
+                            id="histogram_comparison",
+                            style={
+                                "border-width": "0",
+                                "width": "100%",
+                                "height": "100%",
+                            },
+                        )
+                    ),
+                ]
+            )
+        ),
+        dcc.Loading(
+            dbc.Card(
+                [
+                    dbc.CardHeader(
+                        "Model Run Comparison",
+                        style={"fontWeight": "bold"},
+                    ),
+                    dbc.CardBody(
+                        dcc.Graph(
+                            id="mean_climatology",
+                            style={
+                                "border-width": "0",
+                                "width": "100%",
+                                "height": "100%",
+                            },
+                        )
+                    ),
+                ]
+            )
+        ),
+    ]
+)
 
 
 # Dropdowns for specifying contents of the graphs
@@ -217,7 +240,7 @@ app.layout = dbc.Container(
 )
 def update_map(scenario_drop, var_drop, mod_drop, date_input, exp_drop):
     """
-    Updates the climate map graph when the a different variable is selected
+    Updates the climate map graph when a different variable is selected
     """
     date_list = date_input.split("/")
     if scenario_drop == "None":
@@ -243,6 +266,21 @@ def update_map(scenario_drop, var_drop, mod_drop, date_input, exp_drop):
             exp_id=data["exp_id"],
             layer=1,
         )
+    return fig
+
+
+@app.callback(
+    Output("mean_climatology", "figure"),
+    Input("scenario_drop", "value"),
+)
+def update_line_comp(scenario_drop):
+    """
+    Updates the climate map graph when a different variable is selected
+    """
+    with open(path + scenario_drop) as f:
+        data = json.load(f)
+    dset = xr.open_dataset(path + scenario_drop.split(".")[0] + ".nc")
+    fig = plot_member_line_comp(dset, data["var_id"])
     return fig
 
 
@@ -339,7 +377,7 @@ def render_content(tab):
     if tab == "map_tab":
         return climate_heatmap_card
     elif tab == "comp_tab":
-        return comparison_card
+        return comp_tab_contents
 
 
 @app.callback(
@@ -349,7 +387,6 @@ def render_content(tab):
 def update_date_for_case(scenario_drop):
     if scenario_drop == "None":
         raise PreventUpdate
-    # if scenario_drop != "None":
     with open(path + scenario_drop) as f:
         data = json.load(f)
     start_dates = data["start_date"].split("-")
