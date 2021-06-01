@@ -325,6 +325,41 @@ def plot_model_comparisons(
     return fig
 
 
+def plot_member_line_comp(dset, var_id):
+    """Plots mean global climatology for the given multi-member dset
+
+    Dset should be in the case format.
+
+    Parameters
+    ----------
+    dset : xarray.Dataset
+        Should be in the format created by case utils
+    var_id : str
+        The var id to use
+
+    Returns
+    -------
+    fig : plotly figure object
+
+    """
+    # convert to a pandas dataframe calculate averages by run and time
+    df_pd = dset.to_dataframe().reset_index()
+    # Assumes the model run dimension is called "member_num"
+    df_pd = (
+        df_pd.groupby(by=["member_num", "time"])
+        .mean()
+        .reset_index()[["member_num", "time", var_id]]
+    )
+    fig = px.line(
+        df_pd,
+        x="time",
+        y=var_id,
+        color="member_num",
+        title=f"Mean Climatology for {get_var_key()[var_id]['fullname']}",
+    )
+    return fig
+
+
 def plotly_wrapper(
     data_store,
     var_id="tas",
