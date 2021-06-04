@@ -16,11 +16,11 @@ from dash.dependencies import Output
 from dash.exceptions import PreventUpdate
 
 from src.a448_lib import data_read
-from src.plot_fcns import get_var_key
-from src.plot_fcns import plot_model_comparisons
-from src.plot_fcns import plot_year_plotly
-from src.plot_fcns import plotly_wrapper
-from src.plot_fcns import plot_member_line_comp
+from src.wrangling_utils import get_var_key
+from src.plot_utils import plot_model_comparisons
+from src.plot_utils import plot_year_plotly
+from src.plot_utils import plotly_wrapper
+from src.plot_utils import plot_member_line_comp
 
 # Checking to see if the data is already downloaded
 csv_filename = "pangeo-cmip6.csv"
@@ -287,13 +287,16 @@ def update_line_comp(scenario_drop):
 # Callbacks
 @app.callback(
     Output("histogram_comparison", "figure"),
+    Input("scenario_drop", "value"),
     Input("var_drop", "value"),
     Input("mod_drop", "value"),
     Input("mod_comp_drop", "value"),
     Input("date_input", "value"),
     Input("exp_drop", "value"),
 )
-def update_comparison_hist(var_drop, mod_drop, mod_comp_drop, date_input, exp_drop):
+def update_comparison_hist(
+    scenario_drop, var_drop, mod_drop, mod_comp_drop, date_input, exp_drop
+):
     """
     Updates the model comparison hists
     """
