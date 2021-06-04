@@ -305,12 +305,12 @@ def plot_model_comparisons(
     dset, var_id, mod_id, exp_id, month, year, layer, mod_comp_id="CanESM5"
 ):
     # Get a df with the corresponding var_id etc. for the first model
-    filt_dset = get_cmpi6_model_run(dset, var_id, mod_id, exp_id)
+    filt_dset = get_cmpi6_model_run(dset, var_id, mod_id, exp_id)[0]
     filt_dset = get_month_and_year(filt_dset, var_id, month, year, exp_id, layer)
     df = filt_dset.to_dataframe().reset_index()
 
     # Get a df with the corresponding var_id etc. for the second model
-    dset_comp = get_cmpi6_model_run(dset, var_id, mod_comp_id, exp_id)
+    dset_comp = get_cmpi6_model_run(dset, var_id, mod_comp_id, exp_id)[0]
     dset_comp = get_month_and_year(dset_comp, var_id, month, year, exp_id, layer)
     df_comp = dset_comp.to_dataframe().reset_index()
 
