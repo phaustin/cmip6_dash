@@ -1,10 +1,12 @@
 import cartopy.feature as cf
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import numpy as np
 
-from .wrangling_utils import get_var_key, get_month_and_year, get_cmpi6_model_run
+from .wrangling_utils import get_cmpi6_model_run
+from .wrangling_utils import get_month_and_year
+from .wrangling_utils import get_var_key
 
 
 def get_outline(fig):
@@ -113,6 +115,35 @@ def plot_year_plotly(dset, var_id, month, year, exp_id, layer=1):
 def plot_model_comparisons(
     dset, var_id, mod_id, exp_id, month, year, layer, mod_comp_id="CanESM5"
 ):
+    """Plots a histogram comparing counts of different var_id values between two models
+        for a given year
+
+    Parameters
+    ----------
+    dset : xarray.Dataset
+        The xarray.Dataset to plot
+    var_id : 'str'
+        The variable to be plotted.
+    mod_id : 'str
+        The model id to be plotted
+    month : 'str'
+        String specifying which month to plot.
+        Must be between '01'-'12'. 0 required for single digit months.
+    year : 'str'
+        Year to plot. Must be between '1850' and '2014'
+    exp_id : 'str'
+        The experimental run to plot
+    layer : str
+        layer to plot- not implemented
+    mod_comp_id : str, optional
+        model to compare model specified by mod_id to, by default "CanESM5"
+
+    Returns
+    -------
+    plotly figure object
+        Plotly figure plot
+
+    """
     # Get a df with the corresponding var_id etc. for the first model
     filt_dset = get_cmpi6_model_run(dset, var_id, mod_id, exp_id)[0]
     filt_dset = get_month_and_year(filt_dset, var_id, month, year, exp_id, layer)
@@ -130,7 +161,14 @@ def plot_model_comparisons(
     uni_df = uni_df.melt(var_name="model")
 
     # Plotting counts of different values against each ohter
-    fig = px.histogram(uni_df, x="value", color="model", opacity=0.5)
+    fig = px.histogram(
+        uni_df,
+        x="value",
+        color="model",
+        histnorm="probability density",
+        opacity=0.5,
+        facet_row="model",
+    )
     return fig
 
 

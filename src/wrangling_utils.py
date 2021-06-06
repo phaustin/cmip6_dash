@@ -1,5 +1,5 @@
-import xarray as xr
 import fsspec
+import xarray as xr
 
 
 def get_var_key():

@@ -1,9 +1,10 @@
 import json
 
 import xarray as xr
-
+from wrangling_utils import get_cmpi6_model_run
+from wrangling_utils import get_model_key
+from wrangling_utils import get_var_key
 # The . here indicates current working directory
-from wrangling_utils import get_cmpi6_model_run, get_var_key, get_model_key
 
 
 def get_case_data(data_store, case_definition, write_path="None"):

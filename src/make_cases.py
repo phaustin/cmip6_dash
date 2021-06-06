@@ -3,8 +3,8 @@ import os
 from pathlib import Path
 
 import intake
-from plot_fcns import get_case_data
-from plot_fcns import write_case_definition
+from case_utils import get_case_data
+from case_utils import write_case_definition
 
 from a448_lib import data_read
 
