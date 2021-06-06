@@ -71,6 +71,32 @@ def get_model_key():
     return model_keys
 
 
+def get_scenario_key():
+    scenario_key = {
+        "historical": {
+            "start_year": 1850,
+            "end_year": 2014,
+            "full_name": "Historical Runs",
+        },
+        "piControl": {
+            "start_year": "None",
+            "end_year": "None",
+            "full_name": "Pre-industrial Control",
+        },
+        "ssp585": {
+            "start_year": 2015,
+            "end_year": 2100,
+            "full_name": "ssp585",
+        },
+        "ssp245": {
+            "start_year": 2015,
+            "end_year": 2100,
+            "full_name": "ssp245",
+        },
+    }
+    return scenario_key
+
+
 def get_models_with_var(data_store, var_id, table_id):
     """Takes a variable id and a corresponding table id and and returns all the model labels
     with the combination"""
