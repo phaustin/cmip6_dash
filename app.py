@@ -16,11 +16,11 @@ from dash.dependencies import Output
 from dash.exceptions import PreventUpdate
 
 from src.a448_lib import data_read
-from src.wrangling_utils import get_var_key
+from src.plot_utils import plot_member_line_comp
 from src.plot_utils import plot_model_comparisons
 from src.plot_utils import plot_year_plotly
 from src.plot_utils import plotly_wrapper
-from src.plot_utils import plot_member_line_comp
+from src.wrangling_utils import get_var_key
 
 # Checking to see if the data is already downloaded
 csv_filename = "pangeo-cmip6.csv"
@@ -66,7 +66,8 @@ climate_heatmap_card = [
         dbc.Card(
             [
                 dbc.CardHeader(
-                    "Climate Plot",
+                    id="heatmap_title",
+                    # "Climate Plot",
                     style={"fontWeight": "bold"},
                 ),
                 dbc.CardBody(
@@ -177,7 +178,11 @@ dashboard_controls = dbc.Col(
 )
 
 # Layout for the app
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = dash.Dash(
+    __name__,
+    external_stylesheets=[dbc.themes.BOOTSTRAP],
+    suppress_callback_exceptions=True,
+)
 
 app.layout = dbc.Container(
     [
@@ -231,7 +236,7 @@ app.layout = dbc.Container(
 
 # Callbacks
 @app.callback(
-    Output("histogram", "figure"),
+    [Output("histogram", "figure"), Output("heatmap_title", "children")],
     Input("scenario_drop", "value"),
     Input("var_drop", "value"),
     Input("mod_drop", "value"),
@@ -243,6 +248,7 @@ def update_map(scenario_drop, var_drop, mod_drop, date_input, exp_drop):
     Updates the climate map graph when a different variable is selected
     """
     date_list = date_input.split("/")
+    var_key = get_var_key()
     if scenario_drop == "None":
         date_list = date_input.split("/")
         fig = plotly_wrapper(
@@ -254,6 +260,17 @@ def update_map(scenario_drop, var_drop, mod_drop, date_input, exp_drop):
             year=date_list[0],
             layer=1,
         )
+        title = (
+            var_key[var_drop]["fullname"]
+            + " "
+            + date_list[0]
+            + "-"
+            + date_list[1]
+            + " "
+            + exp_drop
+            + " "
+            + mod_drop
+        )
     else:
         with open(path + scenario_drop) as f:
             data = json.load(f)
@@ -261,12 +278,24 @@ def update_map(scenario_drop, var_drop, mod_drop, date_input, exp_drop):
         fig = plot_year_plotly(
             dset.sel({"member_num": 0}),
             data["var_id"],
+            data["mod_id"],
             month=date_list[1],
             year=date_list[0],
             exp_id=data["exp_id"],
             layer=1,
         )
-    return fig
+        title = (
+            var_key[data["var_id"]]["fullname"]
+            + " "
+            + date_list[0]
+            + "-"
+            + date_list[1]
+            + " "
+            + data["exp_id"]
+            + " "
+            + mod_drop
+        )
+    return fig, title
 
 
 @app.callback(
