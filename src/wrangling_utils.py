@@ -1,5 +1,27 @@
+from pathlib import Path
+
 import fsspec
+import intake
 import xarray as xr
+
+from a448_lib import data_read
+
+
+def get_esm_datastore():
+    """Wrapper function for code to grab the pangeo datastore using the
+    a448_lib package"""
+    csv_filename = "pangeo-cmip6.csv"
+    root = "https://storage.googleapis.com/cmip6"
+    if Path(csv_filename).is_file():
+        print(f"found {csv_filename}")
+    else:
+        print(f"downloading {csv_filename}")
+        data_read.download(csv_filename, root=root)
+
+    json_filename = "https://storage.googleapis.com/cmip6/pangeo-cmip6.json"
+
+    col = intake.open_esm_datastore(json_filename)
+    return col
 
 
 def get_var_key():
@@ -24,16 +46,16 @@ def get_var_key():
             "monthly_table": "Amon",
             "units": "[1]",
         },
-        "sisnthick": {
-            "fullname": "Snow Thickness",
-            "monthly_table": "SImon",
-            "units": "[m]",
-        },
-        "sithick": {
-            "fullname": "Sea Ice Thickness",
-            "monthly_table": "SImon",
-            "units": "[m]",
-        },
+        #        "sisnthick": {
+        #            "fullname": "Snow Thickness",
+        #            "monthly_table": "SImon",
+        #            "units": "[m]",
+        #        },
+        #        "sithick": {
+        #            "fullname": "Sea Ice Thickness",
+        #            "monthly_table": "SImon",
+        #            "units": "[m]",
+        #        },
         "mrro": {
             "fullname": "Total Runoff",
             "monthly_table": "Lmon",
@@ -71,8 +93,8 @@ def get_model_key():
     return model_keys
 
 
-def get_scenario_key():
-    scenario_key = {
+def get_experiment_key():
+    exp_key = {
         "historical": {
             "start_year": 1850,
             "end_year": 2014,
@@ -94,7 +116,7 @@ def get_scenario_key():
             "full_name": "ssp245",
         },
     }
-    return scenario_key
+    return exp_key
 
 
 def get_models_with_var(data_store, var_id, table_id):
