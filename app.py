@@ -17,8 +17,8 @@ from src.plot_utils import plot_member_line_comp
 from src.plot_utils import plot_model_comparisons
 from src.plot_utils import plot_year_plotly
 from src.plot_utils import plotly_wrapper
-from src.wrangling_utils import get_var_key
 from src.wrangling_utils import get_esm_datastore
+from src.wrangling_utils import get_var_key
 
 # Grabbing the ESM datastore
 col = get_esm_datastore()
@@ -234,21 +234,21 @@ def update_map(scenario_drop, var_drop, mod_drop, date_input, exp_drop):
 
     Parameters
     ----------
-    scenario_drop : [type]
-        [description]
-    var_drop : [type]
-        [description]
-    mod_drop : [type]
-        [description]
-    date_input : [type]
-        [description]
-    exp_drop : [type]
-        [description]
+    scenario_drop : str
+        Output of string dropdown
+    var_drop : str
+        Var dropdown output
+    mod_drop : str
+        Mod dropdown selection
+    date_input : str
+        Input date selection
+    exp_drop : str
+        Experiment dropdown selection
 
     Returns
     -------
-    [type]
-        [description]
+    Plotly figure
+        Output of
     """
     date_list = date_input.split("/")
     var_key = get_var_key()
@@ -311,13 +311,13 @@ def update_line_comp(scenario_drop):
 
     Parameters
     ----------
-    scenario_drop : [type]
-        [description]
+    scenario_drop : str
+        The scenario to plot
 
     Returns
     -------
-    [type]
-        [description]
+    Plotly figure
+        The plotly figure produced by plot_member_line_plot
     """
     with open(path + scenario_drop) as f:
         data = json.load(f)
@@ -429,7 +429,7 @@ def update_mean(selection):
 
     Returns
     -------
-    float
+    str
         Mean climatology selected for a given time period
     """
     if selection is None:
@@ -444,16 +444,16 @@ def update_mean(selection):
 
 @app.callback(Output("var_card", "children"), Input("histogram", "selectedData"))
 def update_variance(selection):
-    """Updates the variance of the car
+    """Updates the variance of card based on selection on graph
 
     Parameters
     ----------
-    selection : [type]
-        [description]
+    selection : dictionary
+        Data selected on the climate graph
 
     Returns
     -------
-    [type]
+    str
         [description]
     """
     if selection is None:
@@ -468,17 +468,17 @@ def update_variance(selection):
 
 @app.callback(Output("tab_switch_content", "children"), Input("tab_switch", "value"))
 def render_content(tab):
-    """[summary]
+    """Switches the content displayed when a different tab is selected
 
     Parameters
     ----------
-    tab : [type]
-        [description]
+    tab : str
+        Which tab is selected
 
     Returns
     -------
-    [type]
-        [description]
+    Dbc. Col
+        Dash code defined above for different tab content
     """
     if tab == "map_tab":
         return climate_heatmap_card
