@@ -7,36 +7,21 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
 import dash_html_components as html
-import intake
 import numpy as np
-import pandas as pd
 import xarray as xr
 from dash.dependencies import Input
 from dash.dependencies import Output
 from dash.exceptions import PreventUpdate
 
-from src.a448_lib import data_read
 from src.plot_utils import plot_member_line_comp
 from src.plot_utils import plot_model_comparisons
 from src.plot_utils import plot_year_plotly
 from src.plot_utils import plotly_wrapper
 from src.wrangling_utils import get_var_key
+from src.wrangling_utils import get_esm_datastore
 
-# Checking to see if the data is already downloaded
-csv_filename = "pangeo-cmip6.csv"
-root = "https://storage.googleapis.com/cmip6"
-if Path(csv_filename).is_file():
-    print(f"found {csv_filename}")
-else:
-    print(f"downloading {csv_filename}")
-    data_read.download(csv_filename, root=root)
-
-json_filename = "https://storage.googleapis.com/cmip6/pangeo-cmip6.json"
-
-# Getting the esm data store
-catalog_df = pd.read_csv(csv_filename)
-
-col = intake.open_esm_datastore(json_filename)
+# Grabbing the ESM datastore
+col = get_esm_datastore()
 
 var_key = get_var_key()
 
@@ -244,8 +229,26 @@ app.layout = dbc.Container(
     Input("exp_drop", "value"),
 )
 def update_map(scenario_drop, var_drop, mod_drop, date_input, exp_drop):
-    """
-    Updates the climate map graph when a different variable is selected
+    """Updates the climate map graph when a different variable is selected
+
+
+    Parameters
+    ----------
+    scenario_drop : [type]
+        [description]
+    var_drop : [type]
+        [description]
+    mod_drop : [type]
+        [description]
+    date_input : [type]
+        [description]
+    exp_drop : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
     """
     date_list = date_input.split("/")
     var_key = get_var_key()
@@ -303,8 +306,18 @@ def update_map(scenario_drop, var_drop, mod_drop, date_input, exp_drop):
     Input("scenario_drop", "value"),
 )
 def update_line_comp(scenario_drop):
-    """
-    Updates the climate map graph when a different variable is selected
+    """Updates the climate map graph when a different variable is selected
+
+
+    Parameters
+    ----------
+    scenario_drop : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
     """
     with open(path + scenario_drop) as f:
         data = json.load(f)
@@ -326,8 +339,27 @@ def update_line_comp(scenario_drop):
 def update_comparison_hist(
     scenario_drop, var_drop, mod_drop, mod_comp_drop, date_input, exp_drop
 ):
-    """
-    Updates the model comparison hists
+    """Updates the model comparison plot when inputs are changed
+
+    Parameters
+    ----------
+    scenario_drop : str
+        Output of string dropdown
+    var_drop : str
+        Var dropdown output
+    mod_drop : str
+        Mod dropdown selection
+    mod_comp_drop : str
+        Mod comp dropdown selection
+    date_input : str
+        Input date selection
+    exp_drop : str
+        Experiment dropdown selection
+
+    Returns
+    -------
+    Plotly Figure
+        Plotly figure plotted
     """
     date_list = date_input.split("/")
     fig = plot_model_comparisons(
@@ -349,9 +381,20 @@ def update_comparison_hist(
     Input("mod_drop", "value"),
 )
 def restrict_experiments(date_input, mod_drop):
-    """
-    This function changes the possible values of the experiment drop downs based on the
+    """This function changes the possible values of the experiment drop downs based on the
     selected date and model selection.
+
+    Parameters
+    ----------
+    date_input : [type]
+        [description]
+    mod_drop : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
     """
     date_list = date_input.split("/")
     year = int(date_list[0])
@@ -376,8 +419,18 @@ def restrict_experiments(date_input, mod_drop):
 
 @app.callback(Output("mean_card", "children"), Input("histogram", "selectedData"))
 def update_mean(selection):
-    """
-    Updates the mean card depending on the selected data in the graph
+    """Updates the mean card depending on the selected data in the graph
+
+
+    Parameters
+    ----------
+    selection : dictionary
+        Data selected on the climate graph
+
+    Returns
+    -------
+    float
+        Mean climatology selected for a given time period
     """
     if selection is None:
         return 0
@@ -391,8 +444,17 @@ def update_mean(selection):
 
 @app.callback(Output("var_card", "children"), Input("histogram", "selectedData"))
 def update_variance(selection):
-    """
-    Updates the variance card depending on the selected data in the graph
+    """Updates the variance of the car
+
+    Parameters
+    ----------
+    selection : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
     """
     if selection is None:
         return 0
@@ -406,6 +468,18 @@ def update_variance(selection):
 
 @app.callback(Output("tab_switch_content", "children"), Input("tab_switch", "value"))
 def render_content(tab):
+    """[summary]
+
+    Parameters
+    ----------
+    tab : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     if tab == "map_tab":
         return climate_heatmap_card
     elif tab == "comp_tab":
@@ -417,6 +491,23 @@ def render_content(tab):
     Input("scenario_drop", "value"),
 )
 def update_date_for_case(scenario_drop):
+    """[summary]
+
+    Parameters
+    ----------
+    scenario_drop : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
+
+    Raises
+    ------
+    PreventUpdate
+        [description]
+    """
     if scenario_drop == "None":
         raise PreventUpdate
     with open(path + scenario_drop) as f:
