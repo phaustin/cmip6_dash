@@ -4,7 +4,6 @@ import xarray as xr
 from wrangling_utils import get_cmpi6_model_run
 from wrangling_utils import get_model_key
 from wrangling_utils import get_var_key
-# The . here indicates current working directory
 
 
 def get_case_data(data_store, case_definition, write_path="None"):
@@ -12,7 +11,7 @@ def get_case_data(data_store, case_definition, write_path="None"):
     """Queries a given data store for the specification and returns and writes the data
 
     Wraps a query for the data_store to get the xarray. Variable id must be supported
-    by get_monthly_table_for_var(). Data is written in the xarr format
+    by get_monthly_table_for_var(). Data is written in the netCDF format.
 
     Parameters
     ----------
@@ -31,7 +30,7 @@ def get_case_data(data_store, case_definition, write_path="None"):
 
     Returns
     -------
-    xarr_file : list of xarrary dsets
+    xarr_file : xarrary Dataset
         The experiment for the given query in a list
     """
     dsets = get_cmpi6_model_run(
@@ -59,15 +58,12 @@ def get_case_data(data_store, case_definition, write_path="None"):
         for dset in dsets
     ]
 
-    for index in range(len(dsets_clipped)):
-        dsets_clipped[index] = dsets_clipped[index].assign_coords(member_num=index)
-
-    concat_sets = xr.concat(dsets_clipped, dim="member_num")
+    concat_sets = join_members(dsets_clipped)
 
     if write_path != "None":
         concat_sets.to_netcdf(write_path)
     else:
-        return case_definition
+        return concat_sets
 
 
 def clip_xarray(
@@ -99,10 +95,34 @@ def lon_180_to_360(lon):
     return lon
 
 
+def join_members(list_of_dsets):
+    """Joins a list of members together in one dataset
+
+    Parameters
+    ----------
+    list_of_dsets : list
+        List of xarray datasets. Should be repeats of the same model run
+        with identical parameters. New dimension is called "member_num" assigned
+        based on order in list passed to function.
+
+    Returns
+    -------
+    xarray dataset
+        list of xarray datasets
+    """
+    # Creating the new index to join data sets on
+    for index in range(len(list_of_dsets)):
+        list_of_dsets[index] = list_of_dsets[index].assign_coords(member_num=index)
+
+    # Joining the datasets on the new axis and returning
+    concat_sets = xr.concat(list_of_dsets, dim="member_num")
+    return concat_sets
+
+
 def write_case_definition(
     case_name,
-    var_id,
-    mod_id,
+    var_id_list,
+    mod_id_list,
     exp_id,
     members,
     start_date,
@@ -122,18 +142,19 @@ def write_case_definition(
          definitions with the same name. If 'None' specified, the case definition will
          not be saved as a json
 
-    var_id : str
+    var_id_list : list of str
          The variable id to use in the query. Must be a member of dict supplied by
          get_var_key()
 
-    mod_id : str
+    mod_id_list : list of str
          The model id to query results for. Must be a valid cimp6 model id
 
     exp_id : str
-         The experiment id. Must be valid for the mod_id and var_id
+         The experiment id. Must be valid for each mod in the mod_id_list and str in the
+         var_id list
 
     members : int
-        Number of model runs to include in case xarr dataset. Should be between 0 and 39
+        Number of model runs to include in case xarr dataset.
 
     start_date : str '1950-01'
         Of the form YYYY-MM e.g '1955-02'. Start of the date range- check these dates
@@ -166,24 +187,26 @@ def write_case_definition(
     # Var id should be in var_keys
     mod_key = get_model_key()
     try:
-        var_key = get_var_key()
-        var_key[var_id]
+        for var in var_id_list:
+            var_key = get_var_key()
+            var_key[var]
     except KeyError:
         print(f"var id should be one of {get_var_key().keys()}")
         raise KeyError
     # Mod id should be one in the model key dict
     try:
-        mod_key[mod_id]
+        for mod in mod_id_list:
+            mod_key[mod]
     except KeyError:
         print(f"mod id should be one of {mod_key.keys()}")
         raise KeyError
     # The exp id must be one of the scenarios or controls for the model
-    model_opts = mod_key[mod_id]["scenarios"] + mod_key[mod_id]["controls"]
+    model_opts = mod_key[mod_id_list[0]]["scenarios"] + mod_id_list[0]["controls"]
     try:
         if exp_id not in model_opts:
             raise AssertionError
     except AssertionError:
-        print(f"experiment id should be one of {model_opts} for {mod_id}")
+        print(f"experiment id should be one of {model_opts} for {mod_id_list}")
         raise AssertionError
 
     # Members should be less than 40
@@ -203,13 +226,14 @@ def write_case_definition(
         if not (end_date_split[0] >= 1850 and end_date_split[0] <= 2014):
             print("historical runs range from 1850 to 2014")
             raise AssertionError
-    if exp_id in mod_key[mod_id]["scenarios"]:
+    if exp_id in mod_key[mod_id_list]["scenarios"]:
         if not start_date_split[0] >= 2015 and start_date_split[0] <= 2100:
             print("historical runs range from 1850 to 2014")
             raise AssertionError
         if not end_date_split[0] >= 2015 and end_date_split[0] <= 2100:
             print("historical runs range from 1850 to 2014")
             raise AssertionError
+    # Checking lats and lons are in the right range
     lats = [top_left[0], bottom_right[0]]
     for lat in lats:
         if abs(lat) > 90:
@@ -226,8 +250,8 @@ def write_case_definition(
     # The lats should correspond to Amon gridding (see above)
     case_definition = {
         "case_name": case_name,
-        "var_id": var_id,
-        "mod_id": mod_id,
+        "var_id": var_id_list,
+        "mod_id": mod_id_list,
         "exp_id": exp_id,
         "members": members,
         "start_date": start_date,
