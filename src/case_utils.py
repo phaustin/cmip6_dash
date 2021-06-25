@@ -100,7 +100,9 @@ def get_case_data(data_store, case_definition, write_path="None"):
         return_dict[mod] = var_dict
 
     if write_path != "None":
-        scenario_data_dict_to_netcdf(write_path)
+        scenario_data_dict_to_netcdf(
+            case_definition["case_name"], return_dict, write_path
+        )
     else:
         return return_dict
 
@@ -291,8 +293,8 @@ def write_case_definition(
     # The lats should correspond to Amon gridding (see above)
     case_definition = {
         "case_name": case_name,
-        "var_id": var_id_list,
-        "mod_id": mod_id_list,
+        "var_id_list": var_id_list,
+        "mod_id_list": mod_id_list,
         "exp_id": exp_id,
         "members": members,
         "start_date": start_date,
