@@ -13,6 +13,7 @@ def scenario_data_dict_to_netcdf(
 ):
     """Takes a dict of model, vars, and xarray dsets concatted along member axis,
     Creates a folder with the name of the scenario, and saves each xarray as a netcdf
+    with a name of the form model_variable
      the file
     dict should be of the form
     {'modelx' {'var1' : xarray_dataset,
@@ -57,37 +58,51 @@ def get_case_data(data_store, case_definition, write_path="None"):
     xarr_file : xarrary Dataset
         The experiment for the given query in a list
     """
-    dsets = get_cmpi6_model_run(
-        data_store,
-        case_definition["var_id"],
-        case_definition["mod_id"],
-        case_definition["exp_id"],
-        case_definition["members"],
-    )
-
+    # Grabbing through the corners of our case
     bottom_lat_bnd = case_definition["bottom_right"][0]
     top_lat_bnd = case_definition["top_left"][0]
     right_lon_bnd = case_definition["bottom_right"][1]
     left_lon_bnd = case_definition["top_left"][1]
 
-    dsets_clipped = [
-        clip_xarray(
-            dset,
-            top_lat_bnd,
-            bottom_lat_bnd,
-            right_lon_bnd,
-            left_lon_bnd,
-            lons_360=False,
-        ).sel(time=slice(case_definition["start_date"], case_definition["end_date"]))
-        for dset in dsets
-    ]
-
-    concat_sets = join_members(dsets_clipped)
+    return_dict = {}
+    # Iterating through all the models, creating a dictionary with a variable var_dict
+    # and fetching the xarray set for the first n members in that variable/model
+    # combo and joining all the members into the same xarray set
+    for mod in case_definition["mod_id_list"]:
+        var_dict = {}
+        # The fetching step
+        for var in case_definition["var_id_list"]:
+            dsets = get_cmpi6_model_run(
+                data_store,
+                var,
+                mod,
+                case_definition["exp_id"],
+                case_definition["members"],
+            )
+            # The clipping to geographic area and time step
+            dsets_clipped = [
+                clip_xarray(
+                    dset,
+                    top_lat_bnd,
+                    bottom_lat_bnd,
+                    right_lon_bnd,
+                    left_lon_bnd,
+                    lons_360=False,
+                ).sel(
+                    time=slice(
+                        case_definition["start_date"], case_definition["end_date"]
+                    )
+                )
+                for dset in dsets
+            ]
+            # The joining on member axis step
+            var_dict[var] = join_members(dsets_clipped)
+        return_dict[mod] = var_dict
 
     if write_path != "None":
-        concat_sets.to_netcdf(write_path)
+        scenario_data_dict_to_netcdf(write_path)
     else:
-        return concat_sets
+        return return_dict
 
 
 def clip_xarray(
