@@ -1,9 +1,10 @@
 import json
 
 import xarray as xr
-from wrangling_utils import get_cmpi6_model_run
-from wrangling_utils import get_model_key
-from wrangling_utils import get_var_key
+
+from .wrangling_utils import get_cmpi6_model_run
+from .wrangling_utils import get_model_key
+from .wrangling_utils import get_var_key
 
 
 def get_case_data(data_store, case_definition, write_path="None"):
@@ -201,7 +202,9 @@ def write_case_definition(
         print(f"mod id should be one of {mod_key.keys()}")
         raise KeyError
     # The exp id must be one of the scenarios or controls for the model
-    model_opts = mod_key[mod_id_list[0]]["scenarios"] + mod_id_list[0]["controls"]
+    model_opts = (
+        mod_key[mod_id_list[0]]["scenarios"] + mod_key[mod_id_list[0]]["controls"]
+    )
     try:
         if exp_id not in model_opts:
             raise AssertionError
@@ -226,7 +229,7 @@ def write_case_definition(
         if not (end_date_split[0] >= 1850 and end_date_split[0] <= 2014):
             print("historical runs range from 1850 to 2014")
             raise AssertionError
-    if exp_id in mod_key[mod_id_list]["scenarios"]:
+    if exp_id in mod_key[mod_id_list[0]]["scenarios"]:
         if not start_date_split[0] >= 2015 and start_date_split[0] <= 2100:
             print("historical runs range from 1850 to 2014")
             raise AssertionError
