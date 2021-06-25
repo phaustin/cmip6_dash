@@ -1,10 +1,33 @@
 import json
+import os
 
 import xarray as xr
 
 from .wrangling_utils import get_cmpi6_model_run
 from .wrangling_utils import get_model_key
 from .wrangling_utils import get_var_key
+
+
+def scenario_data_dict_to_netcdf(
+    scenario_name, xarray_dict, write_path, write_over=False
+):
+    """Takes a dict of model, vars, and xarray dsets concatted along member axis,
+    Creates a folder with the name of the scenario, and saves each xarray as a netcdf
+     the file
+    dict should be of the form
+    {'modelx' {'var1' : xarray_dataset,
+               'var2' : xarray_dataset},
+     ...
+     'modely' {'var1' : xarray_dataset,
+               'var2' : xarray_dataset},"""
+    file_path = write_path + "/" + scenario_name
+    if os.path.isdir(file_path) & (not write_over):
+        print("Scenario folder exists and write_over set to false!")
+        raise OSError
+    os.mkdir(file_path)
+    for mod in xarray_dict.keys():
+        for var in xarray_dict[mod].keys():
+            xarray_dict[mod][var].to_netcdf(f"{file_path}/{mod}_{var}.nc")
 
 
 def get_case_data(data_store, case_definition, write_path="None"):
