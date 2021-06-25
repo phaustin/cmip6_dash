@@ -10,7 +10,7 @@ from src.wrangling_utils import get_esm_datastore
 
 @pytest.fixture
 def bc_tas_data():
-    nc_path = "cases/bc_tas_2.nc"
+    nc_path = "cases/bc_case_2/CanESM5_tas.nc"
     return xr.open_dataset(nc_path)
 
 
@@ -73,7 +73,7 @@ def test_single_case_data(bc_tas_data, bc_tas_def_fresh):
     # Fetching the datastore and pulling down the case specified above
     col = get_esm_datastore()
     test_fetch = get_case_data(col, bc_tas_def_fresh)
-    assert test_fetch.equals(bc_tas_data)
+    assert test_fetch["CanESM5"]["tas"].equals(bc_tas_data)
 
 
 def test_doble_case_def(bc_tas_double_json, bc_tas_lai_2mod_def):
