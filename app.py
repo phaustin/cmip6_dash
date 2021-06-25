@@ -1,7 +1,6 @@
 import json
 import os
 import re
-from pathlib import Path
 
 import dash
 import dash_bootstrap_components as dbc
@@ -18,12 +17,14 @@ from src.plot_utils import plot_model_comparisons
 from src.plot_utils import plot_year_plotly
 from src.plot_utils import plotly_wrapper
 from src.wrangling_utils import get_esm_datastore
+from src.wrangling_utils import get_model_key
 from src.wrangling_utils import get_var_key
 
 # Grabbing the ESM datastore
 col = get_esm_datastore()
 
 var_key = get_var_key()
+mod_key = get_model_key()
 
 # Getting the names of the cases for the dropdown
 path = "cases/"
@@ -376,45 +377,55 @@ def update_comparison_hist(
 
 
 @app.callback(
-    Output("exp_drop", "options"),
-    Input("date_input", "value"),
-    Input("mod_drop", "value"),
+    [
+        Output("var_drop", "options"),
+        Output("mod_drop", "options"),
+        Output("mod_comp_drop", "options"),
+        Output("date_input", "value"),
+        Output("exp_drop", "options"),
+    ],
+    Input("scenario_drop", "value"),
 )
-def restrict_experiments(date_input, mod_drop):
-    """This function changes the possible values of the experiment drop downs based on the
-    selected date and model selection.
+def update_options(scenario_drop):
+    """Updates the options for var_drop, mod_drop, and exp_drop based on scenario
 
     Parameters
     ----------
-    date_input : [type]
-        [description]
-    mod_drop : [type]
-        [description]
-
+    scenario_drop : str
+        Output of string dropdown
     Returns
     -------
-    [type]
-        [description]
+    var_opts
+        Updated set of values in the variable options dropdown from scenario
+    mod_opts
+        Updated set of values in the model options dropdown from scenario
+    date_val
+        Start date of scenario
+    exp_opts
+        Exp of the scenario selected to set exp options to
     """
-    date_list = date_input.split("/")
-    year = int(date_list[0])
-    if year < 2014:
-        exp_options = [
-            {"label": "Historical Runs", "value": "historical"},
-            {"label": "Preindustrial Control", "value": "piControl"},
-        ]
-    elif mod_drop == "HadGEM3-GC31-MM":
-        exp_options = [
-            {"label": "SSP585", "value": "ssp585"},
-            {"label": "Preindustrial Control", "value": "piControl"},
-        ]
-    else:
-        exp_options = [
-            {"label": "SSP245", "value": "ssp245"},
-            {"label": "SSP585", "value": "ssp585"},
-            {"label": "Preindustrial Control", "value": "piControl"},
-        ]
-    return exp_options
+    # Stops this from updating if we no scenario selected
+    if scenario_drop == "None":
+        raise PreventUpdate
+
+    # Read the json file for the selected case
+    with open(path + scenario_drop) as f:
+        data = json.load(f)
+    var_opts = []
+    for var in data["var_id_list"]:
+        var_opts.append({"label": var_key[var]["fullname"], "value": var})
+
+    mod_opts = []
+    for mod in data["mod_id_list"]:
+        mod_opts.append({"label": mod, "value": mod})
+    mod_comp_opts = mod_opts
+    exp = data["exp_id"]
+    exp_opts = [{"label": exp, "value": exp}]
+
+    start_dates = data["start_date"].split("-")
+    date_val = start_dates[0] + "/" + start_dates[1]
+
+    return var_opts, mod_opts, mod_comp_opts, date_val, exp_opts
 
 
 @app.callback(Output("mean_card", "children"), Input("histogram", "selectedData"))
@@ -484,37 +495,6 @@ def render_content(tab):
         return climate_heatmap_card
     elif tab == "comp_tab":
         return comp_tab_contents
-
-
-@app.callback(
-    Output("date_input", "value"),
-    Input("scenario_drop", "value"),
-)
-def update_date_for_case(scenario_drop):
-    """[summary]
-
-    Parameters
-    ----------
-    scenario_drop : [type]
-        [description]
-
-    Returns
-    -------
-    [type]
-        [description]
-
-    Raises
-    ------
-    PreventUpdate
-        [description]
-    """
-    if scenario_drop == "None":
-        raise PreventUpdate
-    with open(path + scenario_drop) as f:
-        data = json.load(f)
-    start_dates = data["start_date"].split("-")
-    start_date = start_dates[0] + "/" + start_dates[1]
-    return start_date
 
 
 if __name__ == "__main__":
