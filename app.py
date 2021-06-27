@@ -15,12 +15,10 @@ from dash.exceptions import PreventUpdate
 from src.plot_utils import plot_member_line_comp
 from src.plot_utils import plot_model_comparisons
 from src.plot_utils import plot_year_plotly
-from src.plot_utils import plotly_wrapper
+from src.wrangling_utils import get_cmpi6_model_run
 from src.wrangling_utils import get_esm_datastore
 from src.wrangling_utils import get_model_key
 from src.wrangling_utils import get_var_key
-from src.wrangling_utils import get_cmpi6_model_run
-from src.wrangling_utils import get_month_and_year
 
 # Grabbing the ESM datastore
 col = get_esm_datastore()
@@ -259,12 +257,9 @@ def update_map(scenario_drop, var_drop, mod_drop, date_input, exp_drop):
     else:
         folder_path = path + scenario_drop.split(".")[0]
         xarray_dset = xr.open_dataset(f"{folder_path}/{mod_drop}_{var_drop}.nc")
-    xarray_dset_filt = get_month_and_year(
-        xarray_dset, var_drop, month=date_list[1], year=date_list[0], exp_id=exp_drop
-    )
 
     fig = plot_year_plotly(
-        xarray_dset_filt,
+        xarray_dset,
         var_drop,
         mod_drop,
         month=date_list[1],
