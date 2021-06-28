@@ -12,15 +12,15 @@ from dash.dependencies import Input
 from dash.dependencies import Output
 from dash.exceptions import PreventUpdate
 
+from src.case_utils import join_members
 from src.plot_utils import plot_member_line_comp
 from src.plot_utils import plot_model_comparisons
 from src.plot_utils import plot_year_plotly
 from src.wrangling_utils import get_cmpi6_model_run
 from src.wrangling_utils import get_esm_datastore
 from src.wrangling_utils import get_model_key
-from src.wrangling_utils import get_var_key
 from src.wrangling_utils import get_month_and_year
-from src.case_utils import join_members
+from src.wrangling_utils import get_var_key
 
 # Grabbing the ESM datastore
 col = get_esm_datastore()
@@ -46,6 +46,13 @@ mod_options = [
     {"label": "CanESM5", "value": "CanESM5"},
     {"label": "HadGEM3-GC31-MM", "value": "HadGEM3-GC31-MM"},
     {"label": "CESM2", "value": "CESM2"},
+]
+
+exp_options = [
+    {"label": "Historical Runs", "value": "historical"},
+    {"label": "Pre-industrial Control", "value": "piControl"},
+    {"label": "ssp245", "value": "ssp245"},
+    {"label": "ssp585", "value": "ssp585"},
 ]
 
 # Plot displaying heatmap of selected run card
@@ -147,7 +154,7 @@ dashboard_controls = dbc.Col(
         dcc.Dropdown(
             id="exp_drop",
             value="historical",
-            style={"border-width": "0", "width": "100%"},
+            options=exp_options,
         ),
         html.Br(),
         html.H6("Mean"),
