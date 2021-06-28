@@ -19,6 +19,8 @@ from src.wrangling_utils import get_cmpi6_model_run
 from src.wrangling_utils import get_esm_datastore
 from src.wrangling_utils import get_model_key
 from src.wrangling_utils import get_var_key
+from src.wrangling_utils import get_month_and_year
+from src.case_utils import join_members
 
 # Grabbing the ESM datastore
 col = get_esm_datastore()
@@ -53,7 +55,6 @@ climate_heatmap_card = [
             [
                 dbc.CardHeader(
                     id="heatmap_title",
-                    # "Climate Plot",
                     style={"fontWeight": "bold"},
                 ),
                 dbc.CardBody(
@@ -249,7 +250,7 @@ def update_map(scenario_drop, var_drop, mod_drop, date_input, exp_drop):
     Returns
     -------
     Plotly figure
-        Output of
+        Heatmap based on selections
     """
     date_list = date_input.split("/")
     if scenario_drop == "None":
@@ -274,25 +275,48 @@ def update_map(scenario_drop, var_drop, mod_drop, date_input, exp_drop):
 @app.callback(
     Output("mean_climatology", "figure"),
     Input("scenario_drop", "value"),
+    Input("var_drop", "value"),
+    Input("mod_drop", "value"),
+    Input("date_input", "value"),
+    Input("exp_drop", "value"),
 )
-def update_line_comp(scenario_drop):
+def update_line_comp(scenario_drop, var_drop, mod_drop, date_input, exp_drop):
     """Updates the climate map graph when a different variable is selected
 
 
     Parameters
     ----------
     scenario_drop : str
-        The scenario to plot
+        Output of string dropdown
+    var_drop : str
+        Var dropdown output
+    mod_drop : str
+        Mod dropdown selection
+    mod_comp_drop : str
+        Mod comp dropdown selection
+    date_input : str
+        Input date selection
+    exp_drop : str
+        Experiment dropdown selection
 
     Returns
     -------
     Plotly figure
         The plotly figure produced by plot_member_line_plot
     """
-    with open(path + scenario_drop) as f:
-        data = json.load(f)
-    dset = xr.open_dataset(path + scenario_drop.split(".")[0] + ".nc")
-    fig = plot_member_line_comp(dset, data["var_id"])
+    date_list = date_input.split("/")
+    start_date = date_list[0]
+    end_date = str(int(date_list[0]) + 1)
+    if scenario_drop == "None":
+        dset_list = get_cmpi6_model_run(col, var_drop, mod_drop, exp_drop, 3)
+        dset = join_members(dset_list).sel(time=slice(start_date, end_date))
+    else:
+        folder_path = path + scenario_drop.split(".")[0]
+        with open(path + scenario_drop) as f:
+            data = json.load(f)
+        dset = xr.open_dataset(f"{folder_path}/{mod_drop}_{var_drop}.nc")
+
+    fig = plot_member_line_comp(dset, var_drop)
     return fig
 
 
@@ -332,14 +356,27 @@ def update_comparison_hist(
         Plotly figure plotted
     """
     date_list = date_input.split("/")
+
+    if scenario_drop == "None":
+        dset_comp = get_cmpi6_model_run(col, var_drop, mod_comp_drop, exp_drop)[0]
+        dset_comp = get_month_and_year(
+            dset_comp, var_drop, date_list[1], date_list[0], exp_drop
+        )
+        filt_dset = get_cmpi6_model_run(col, var_drop, mod_drop, exp_drop)[0]
+        filt_dset = get_month_and_year(
+            filt_dset, var_drop, date_list[1], date_list[0], exp_drop
+        )
+        dset_tuple = (filt_dset, dset_comp)
+    else:
+        folder_path = path + scenario_drop.split(".")[0]
+        filt_dset = xr.open_dataset(f"{folder_path}/{mod_drop}_{var_drop}.nc")
+        dset_comp = xr.open_dataset((f"{folder_path}/{mod_comp_drop}_{var_drop}.nc"))
+        dset_tuple = (filt_dset, dset_comp)
+
     fig = plot_model_comparisons(
-        col,
+        dset_tuple,
         var_drop,
         mod_drop,
-        exp_drop,
-        month=date_list[1],
-        year=date_list[0],
-        layer=1,
         mod_comp_id=mod_comp_drop,
     )
     return fig
@@ -434,7 +471,7 @@ def update_variance(selection):
     Returns
     -------
     str
-        [description]
+        Standard deviation of the map selection
     """
     if selection is None:
         return 0
@@ -466,5 +503,6 @@ def render_content(tab):
         return comp_tab_contents
 
 
+# Remove the debug=True here in deployment
 if __name__ == "__main__":
     app.run_server(debug=True)

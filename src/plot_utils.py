@@ -23,8 +23,7 @@ def get_outline(fig):
     return fig
 
 
-def plot_year_plotly(dset, var_id, month, year, exp_id, layer=1):
-
+def plot_year_plotly(dset, var_id, mod_id, month, year, exp_id, layer=1):
     """This function plots the var for a given month and year
 
     Wraps plotly plotting code for a one month, year slice of cmpi-6 climate model
@@ -53,6 +52,11 @@ def plot_year_plotly(dset, var_id, month, year, exp_id, layer=1):
     var_data = get_month_and_year(dset, var_id, month, year, exp_id, layer)
 
     var_key = get_var_key()
+
+    # Selecting along the first member dimension if this is a multi-member set
+    # Can be tweaked to average etc. in future
+    if "member_num" in var_data.dims:
+        var_data = var_data.sel(member_num=0)
 
     # Converting to a df so we can use plotly
     var_df = var_data.to_dataframe().reset_index()
@@ -84,7 +88,7 @@ def plot_year_plotly(dset, var_id, month, year, exp_id, layer=1):
                 "title": var_key[var_id]["units"],
             },  # specifies units here
             # Sizing and spacing of contours can be changed by editing these
-            # commented out iptions
+            # commented out options
             contours={
                 # "end": 4,
                 "showlines": False,
@@ -106,22 +110,21 @@ def plot_year_plotly(dset, var_id, month, year, exp_id, layer=1):
 
     fig.update_layout(
         margin={"r": 0, "t": 0, "l": 0, "b": 0},
-        title=var_key[var_id]["fullname"] + " " + year + "-" + month,
+        title=var_key[var_id]["fullname"] + " " + year + "-" + month + " " + mod_id,
     )
 
     return fig
 
 
-def plot_model_comparisons(
-    dset, var_id, mod_id, exp_id, month, year, layer, mod_comp_id="CanESM5"
-):
+def plot_model_comparisons(dsets, var_id, mod_id, mod_comp_id="CanESM5"):
     """Plots a histogram comparing counts of different var_id values between two models
         for a given year
 
     Parameters
     ----------
-    dset : xarray.Dataset
-        The xarray.Dataset to plot
+    dsets : tuple
+        The two xarray.Dataset to plot. Should be the same set of vars except for the
+        different models
     var_id : 'str'
         The variable to be plotted.
     mod_id : 'str
@@ -131,10 +134,6 @@ def plot_model_comparisons(
         Must be between '01'-'12'. 0 required for single digit months.
     year : 'str'
         Year to plot. Must be between '1850' and '2014'
-    exp_id : 'str'
-        The experimental run to plot
-    layer : str
-        layer to plot- not implemented
     mod_comp_id : str, optional
         model to compare model specified by mod_id to, by default "CanESM5"
 
@@ -144,15 +143,8 @@ def plot_model_comparisons(
         Plotly figure plot
 
     """
-    # Get a df with the corresponding var_id etc. for the first model
-    filt_dset = get_cmpi6_model_run(dset, var_id, mod_id, exp_id)[0]
-    filt_dset = get_month_and_year(filt_dset, var_id, month, year, exp_id, layer)
-    df = filt_dset.to_dataframe().reset_index()
-
-    # Get a df with the corresponding var_id etc. for the second model
-    dset_comp = get_cmpi6_model_run(dset, var_id, mod_comp_id, exp_id)[0]
-    dset_comp = get_month_and_year(dset_comp, var_id, month, year, exp_id, layer)
-    df_comp = dset_comp.to_dataframe().reset_index()
+    df = dsets[0].to_dataframe().reset_index()
+    df_comp = dsets[1].to_dataframe().reset_index()
 
     # Changing the column labels on the var_ids to be the model ids so we can melt
     df_comp = df_comp.rename({var_id: mod_comp_id}, axis=1)[[mod_comp_id]]
@@ -166,7 +158,6 @@ def plot_model_comparisons(
         x="value",
         color="model",
         histnorm="probability density",
-        opacity=0.5,
         facet_row="model",
     )
     return fig
@@ -218,5 +209,5 @@ def plotly_wrapper(
 ):
     """Wraps model request and plotting code for ease of use"""
     dset = get_cmpi6_model_run(data_store, var_id, mod_id, exp_id)[0]
-    fig = plot_year_plotly(dset, var_id, month, year, exp_id, layer)
+    fig = plot_year_plotly(dset, var_id, mod_id, month, year, exp_id, layer)
     return fig

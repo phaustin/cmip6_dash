@@ -4,7 +4,7 @@ import fsspec
 import intake
 import xarray as xr
 
-from a448_lib import data_read
+from .a448_lib import data_read
 
 
 def get_esm_datastore():
@@ -187,7 +187,7 @@ def get_cmpi6_model_run(data_store, var_id, mod_id, exp_id="historical", members
 def get_month_and_year(dset, var_id, month, year, exp_id="historical", layer=1):
     """
     This function filters an xarray dset for a given month, year and layer from
-    the cmpi6 historical runs and returns it. It assumes montly data where
+    the cmpi6 historical runs and returns it. It assumes monthly data where
     the day is specified between the 14th and the 17th.
 
     Parameters
