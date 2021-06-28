@@ -217,7 +217,7 @@ def get_month_and_year(dset, var_id, month, year, exp_id="historical", layer=1):
     if exp_id == "piControl":
         year = (
             dset["time"]  # From the time index
-            .isel(time=slice(0, 1))  # Get the first year
+            .isel(time=slice(-2, -1))  # Get the last year
             .dt.year.values[0]  # Change format to year and grab it
         )
         year = str(year)
