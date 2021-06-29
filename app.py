@@ -79,13 +79,13 @@ climate_heatmap_card = [
     )
 ]
 
-# Comparison tab
+# Comparison tab-
 comp_tab_contents = dbc.Col(
     [
         dcc.Loading(
             dbc.Card(
                 [
-                    dbc.CardHeader(
+                    dbc.CardHeader(  # The top comparison histogram
                         "Model Comparison",
                         style={"fontWeight": "bold"},
                     ),
@@ -105,7 +105,7 @@ comp_tab_contents = dbc.Col(
         dcc.Loading(
             dbc.Card(
                 [
-                    dbc.CardHeader(
+                    dbc.CardHeader(  # Comapring models graph
                         "Model Run Comparison",
                         style={"fontWeight": "bold"},
                     ),
@@ -139,13 +139,12 @@ dashboard_controls = dbc.Col(
         dcc.Dropdown(id="mod_drop", value="CanESM5", options=mod_options),
         html.Br(),
         html.H6("Model Comparison"),
-        dcc.Dropdown(id="mod_comp_drop", value="CanESM5", options=mod_options),
+        dcc.Dropdown(id="mod_comp_drop", value="CESM2", options=mod_options),
         html.Br(),
         html.H6("Date YYYY/MM"),
         dcc.Input(
             id="date_input",
             value="1975/02",
-            # debounce=True,
             style={"border-width": "0", "width": "100%"},
         ),
         html.Br(),
@@ -171,7 +170,7 @@ dashboard_controls = dbc.Col(
     },
 )
 
-# Layout for the app
+# Actual layout for the app- all the defined pieces above get put together here
 app = dash.Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
@@ -184,7 +183,7 @@ app.layout = dbc.Container(
             [
                 dbc.Col(
                     [
-                        html.H1(
+                        html.H1(  # The big blue header
                             "CMIP-6 Dashboard",
                             style={
                                 "color": "white",
@@ -204,7 +203,7 @@ app.layout = dbc.Container(
                 )
             ]
         ),
-        dbc.Row(
+        dbc.Row(  # The tabs
             [
                 dcc.Tabs(
                     id="tab_switch",
@@ -216,7 +215,7 @@ app.layout = dbc.Container(
                 )
             ]
         ),
-        dbc.Row(
+        dbc.Row(  # The sidebar with controls
             [
                 dashboard_controls,
                 dbc.Col(id="tab_switch_content"),
@@ -377,7 +376,13 @@ def update_comparison_hist(
     else:
         folder_path = path + scenario_drop.split(".")[0]
         filt_dset = xr.open_dataset(f"{folder_path}/{mod_drop}_{var_drop}.nc")
+        filt_dset = get_month_and_year(
+            filt_dset, var_drop, date_list[1], date_list[0], exp_drop
+        )
         dset_comp = xr.open_dataset((f"{folder_path}/{mod_comp_drop}_{var_drop}.nc"))
+        dset_comp = get_month_and_year(
+            dset_comp, var_drop, date_list[1], date_list[0], exp_drop
+        )
         dset_tuple = (filt_dset, dset_comp)
 
     fig = plot_model_comparisons(
