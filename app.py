@@ -303,7 +303,7 @@ def update_line_comp(scenario_drop, var_drop, mod_drop, date_input, exp_drop):
     start_date = date_list[0]
     end_date = str(int(date_list[0]) + 1)
     if scenario_drop == "None":
-        dset_list = get_cmpi6_model_run(col, var_drop, mod_drop, exp_drop, 3)
+        dset_list = get_cmpi6_model_run(col, var_drop, mod_drop, exp_drop, 1)
         dset = join_members(dset_list).sel(time=slice(start_date, end_date))
     else:
         folder_path = path + scenario_drop.split(".")[0]
