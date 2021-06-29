@@ -1,13 +1,10 @@
 {
     "case_name": "bc_case_mult",
     "var_id_list": [
-        "tas",
-        "lai",
-        "mrro"
+        "tas"
     ],
     "mod_id_list": [
-        "CanESM5",
-        "HadGEM3-GC31-MM"
+        "CanESM5"
     ],
     "exp_id": "historical",
     "members": 10,
