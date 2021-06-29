@@ -79,6 +79,20 @@ def get_case_data(data_store, case_definition, write_path="None"):
                 case_definition["exp_id"],
                 case_definition["members"],
             )
+            # Here we deal with the piControl edge case. Since the dates are not
+            # Consistent between models for piControl, we get the last year available
+            # And save that as the data for each model.
+            if case_definition["exp_id"] == "piControl":
+                year = (
+                    dsets[0]["time"]  # From the time index
+                    .isel(time=slice(-2, -1))  # Get the last year
+                    .dt.year.values[0]  # Change format to year and grab it
+                )
+                start_date = str(year - 1)
+                end_date = str(year)
+            else:
+                start_date = case_definition["start_date"]
+                end_date = case_definition["end_date"]
             # The clipping to geographic area and time step
             dsets_clipped = [
                 clip_xarray(
@@ -88,11 +102,7 @@ def get_case_data(data_store, case_definition, write_path="None"):
                     right_lon_bnd,
                     left_lon_bnd,
                     lons_360=False,
-                ).sel(
-                    time=slice(
-                        case_definition["start_date"], case_definition["end_date"]
-                    )
-                )
+                ).sel(time=slice(start_date, end_date))
                 for dset in dsets
             ]
             # The joining on member axis step
@@ -148,7 +158,7 @@ def join_members(list_of_dsets):
 
     Returns
     -------
-    xarray dataset
+    xarray datasetc
         list of xarray datasets
     """
     # Creating the new index to join data sets on

@@ -227,7 +227,8 @@ app.layout = dbc.Container(
 )
 
 
-# Callbacks
+# Callbacks- these do all the dynamic updating and are where the calls to
+# The various plotting and wrangling functions actually happen
 @app.callback(
     [Output("histogram", "figure"), Output("heatmap_title", "children")],
     Input("scenario_drop", "value"),
