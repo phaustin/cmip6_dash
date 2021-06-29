@@ -1,7 +1,9 @@
 import pytest
 
+from src.wrangling_utils import dict_to_dash_opts
 from src.wrangling_utils import get_cmpi6_model_run
 from src.wrangling_utils import get_esm_datastore
+from src.wrangling_utils import get_experiment_key
 from src.wrangling_utils import get_model_key
 
 
@@ -27,6 +29,23 @@ def mod_exp_tuple():
     return mod_and_exp_id
 
 
+@pytest.fixture
+def drop_down_opts():
+    mod_options = [
+        {"label": "CanESM5", "value": "CanESM5"},
+        {"label": "HadGEM3-GC31-MM", "value": "HadGEM3-GC31-MM"},
+        {"label": "CESM2", "value": "CESM2"},
+    ]
+
+    exp_options = [
+        {"label": "Historical Runs", "value": "historical"},
+        {"label": "Pre-industrial Control", "value": "piControl"},
+        {"label": "ssp585", "value": "ssp585"},
+        {"label": "ssp245", "value": "ssp245"},
+    ]
+    return mod_options, exp_options
+
+
 def test_get_cmip6_model_run(esm_datastore, mod_exp_tuple):
     model = mod_exp_tuple[0]
     exp = mod_exp_tuple[1][0]
@@ -35,3 +54,9 @@ def test_get_cmip6_model_run(esm_datastore, mod_exp_tuple):
     )
     # Testing that three memebers get pulled down
     assert len(model_list) == 3
+
+
+def test_model_opts(drop_down_opts):
+    # Testing conversion between model_key functions and dash_dropdowns
+    assert drop_down_opts[0] == dict_to_dash_opts(get_model_key())
+    assert drop_down_opts[1] == dict_to_dash_opts(get_experiment_key())

@@ -16,44 +16,28 @@ from src.case_utils import join_members
 from src.plot_utils import plot_member_line_comp
 from src.plot_utils import plot_model_comparisons
 from src.plot_utils import plot_year_plotly
+from src.wrangling_utils import dict_to_dash_opts
 from src.wrangling_utils import get_cmpi6_model_run
 from src.wrangling_utils import get_esm_datastore
+from src.wrangling_utils import get_experiment_key
 from src.wrangling_utils import get_model_key
 from src.wrangling_utils import get_month_and_year
 from src.wrangling_utils import get_var_key
+
 
 # Grabbing the ESM datastore
 col = get_esm_datastore()
 
 var_key = get_var_key()
 mod_key = get_model_key()
-
+exp_key = get_experiment_key()
 # Getting the names of the cases for the dropdown
 path = "cases/"
 cases = os.listdir(path)
 cases = [case for case in cases if re.search(r".json$", case)]
-case_defs = [{"label": "None", "value": "None"}]
+case_defs = [{"label": "Developer Mode", "value": "None"}]
 for case in cases:
     case_defs.append({"label": case, "value": case})
-
-# Creating object with all variable full names for dropdown
-full_name_key = []
-for var in var_key:
-    full_name_key.append({"label": var_key[var]["fullname"], "value": var})
-
-# Model names for mod_drop
-mod_options = [
-    {"label": "CanESM5", "value": "CanESM5"},
-    {"label": "HadGEM3-GC31-MM", "value": "HadGEM3-GC31-MM"},
-    {"label": "CESM2", "value": "CESM2"},
-]
-
-exp_options = [
-    {"label": "Historical Runs", "value": "historical"},
-    {"label": "Pre-industrial Control", "value": "piControl"},
-    {"label": "ssp245", "value": "ssp245"},
-    {"label": "ssp585", "value": "ssp585"},
-]
 
 # Plot displaying heatmap of selected run card
 climate_heatmap_card = [
@@ -133,13 +117,17 @@ dashboard_controls = dbc.Col(
         dcc.Dropdown(id="scenario_drop", value="None", options=case_defs),
         html.Br(),
         html.H6("Model Variable"),
-        dcc.Dropdown(id="var_drop", value="tas", options=full_name_key),
+        dcc.Dropdown(id="var_drop", value="tas", options=dict_to_dash_opts(var_key)),
         html.Br(),
         html.H6("Model"),
-        dcc.Dropdown(id="mod_drop", value="CanESM5", options=mod_options),
+        dcc.Dropdown(
+            id="mod_drop", value="CanESM5", options=dict_to_dash_opts(mod_key)
+        ),
         html.Br(),
         html.H6("Model Comparison"),
-        dcc.Dropdown(id="mod_comp_drop", value="CESM2", options=mod_options),
+        dcc.Dropdown(
+            id="mod_comp_drop", value="CESM2", options=dict_to_dash_opts(mod_key)
+        ),
         html.Br(),
         html.H6("Date YYYY/MM"),
         dcc.Input(
@@ -153,7 +141,7 @@ dashboard_controls = dbc.Col(
         dcc.Dropdown(
             id="exp_drop",
             value="historical",
-            options=exp_options,
+            options=dict_to_dash_opts(exp_key),
         ),
         html.Br(),
         html.H6("Mean"),
@@ -430,13 +418,8 @@ def update_options(scenario_drop):
     # Read the json file for the selected case
     with open(path + scenario_drop) as f:
         data = json.load(f)
-    var_opts = []
-    for var in data["var_id_list"]:
-        var_opts.append({"label": var_key[var]["fullname"], "value": var})
-
-    mod_opts = []
-    for mod in data["mod_id_list"]:
-        mod_opts.append({"label": mod, "value": mod})
+    var_opts = dict_to_dash_opts(var_key, key_subset=data["var_id_list"])
+    mod_opts = dict_to_dash_opts(mod_key, key_subset=data["mod_id_list"])
     mod_comp_opts = mod_opts
     exp = data["exp_id"]
     exp_opts = [{"label": exp, "value": exp}]
