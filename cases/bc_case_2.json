@@ -1,0 +1,24 @@
+{
+    "case_name": "bc_case_mult",
+    "var_id_list": [
+        "tas",
+        "lai",
+        "mrro"
+    ],
+    "mod_id_list": [
+        "CanESM5",
+        "HadGEM3-GC31-MM"
+    ],
+    "exp_id": "historical",
+    "members": 10,
+    "start_date": "1950-01",
+    "end_date": "1955-02",
+    "top_left": [
+        60,
+        -139.05
+    ],
+    "bottom_right": [
+        49,
+        -114.068333
+    ]
+}
