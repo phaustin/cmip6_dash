@@ -28,6 +28,24 @@
 
      git commit --no-verify
 
+## Dashboard Rundown
+![Dash Landing Page](docs/CMIP_6_heatmap_numbered.png)
+![Dash Comaprison Hist Page](docs/CMIP_6_probability_density_comparison_nums.png)
+![Dash Member_Comparisons](docs/CMIP_6_member_comparison_nums.png)
+
+1.
+2.
+3.
+4.
+5.
+6.
+7.
+8.
+9.
+10.
+11.
+12.
+
 ## Adding cases
 
 1) Adding a case can be achieved with the following commands. Jupyter lab was initially used for case development but really any python interactive evironment would work. Using the "none" case selection in a local instance of the dashboard is also useful for case design.
