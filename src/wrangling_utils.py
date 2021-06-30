@@ -159,7 +159,7 @@ def dict_to_dash_opts(opt_dict, key_subset=False):
     return return_list
 
 
-def is_date_valid_for_exp(exp, date):
+def is_date_valid_for_exp(exp, date, sep="/"):
     """This function checks if the given date is valid for the exp in question
 
     Note- always returns true for piControl since date is irrelevant and unused by
@@ -170,7 +170,9 @@ def is_date_valid_for_exp(exp, date):
     exp : str
         Should be a key in dict returned by get_experiment_key()
     date : str
-        Should be of the format "YYYY/MM"
+        Should be of the format "YYYY/MM", / can be chaged by specifying sep
+    sep : str
+        Seperator between YYYY and MM in date string
 
     Returns
     -------
@@ -181,7 +183,7 @@ def is_date_valid_for_exp(exp, date):
     if exp_key[exp]["start_year"] == "None":
         return True
 
-    date_list = date.split("/")
+    date_list = date.split(sep)
     year = int(date_list[0])
     after_start_year = exp_key[exp]["start_year"] <= year
     before_end_year = exp_key[exp]["end_year"] >= year

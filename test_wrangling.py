@@ -69,3 +69,4 @@ def test_exp_date_validation():
     assert is_date_valid_for_exp("ssp585", "2015/01")
     assert not is_date_valid_for_exp("ssp585", "2000/06")
     assert is_date_valid_for_exp("piControl", "2000/01")
+    assert is_date_valid_for_exp("historical", "1950-01", sep="-")

@@ -261,11 +261,11 @@ def write_case_definition(
         raise AssertionError
 
     # Checking that the start and end dates are valid for experiment
-    if not is_date_valid_for_exp(exp_id, start_date):
+    if not is_date_valid_for_exp(exp_id, start_date, sep="-"):
         print(f"{start_date} not valid for {exp_id}!")
         raise AssertionError
 
-    if not is_date_valid_for_exp(exp_id, end_date):
+    if not is_date_valid_for_exp(exp_id, end_date, sep="-"):
         print(f"{end_date} not valid for {exp_id}!")
         raise AssertionError
 
