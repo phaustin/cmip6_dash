@@ -79,7 +79,7 @@
      ```
      
      This generates a file structure like this:
-     
+     ```
      cases/
      
        -bc_case_mult.json
@@ -93,7 +93,7 @@
              -HadGEM3-GC31-MM_tas.nc
              
              -HadGEM3-GC31-MM_lai.nc
-             
+     ```
      The case will show up in the scenario dropdown as 'bc_case_mult.json'
 
 2) After you are happy with the case, the code should be transfered to make_case.py and version controlled. A directory will be created in the cases/ file corresponding to the name of the scenario. Each .nc file will contain all the member runs for the different combinations of models and variables.
