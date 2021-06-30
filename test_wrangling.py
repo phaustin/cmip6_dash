@@ -5,6 +5,7 @@ from src.wrangling_utils import get_cmpi6_model_run
 from src.wrangling_utils import get_esm_datastore
 from src.wrangling_utils import get_experiment_key
 from src.wrangling_utils import get_model_key
+from src.wrangling_utils import is_date_valid_for_exp
 
 
 @pytest.fixture
@@ -60,3 +61,11 @@ def test_model_opts(drop_down_opts):
     # Testing conversion between model_key functions and dash_dropdowns
     assert drop_down_opts[0] == dict_to_dash_opts(get_model_key())
     assert drop_down_opts[1] == dict_to_dash_opts(get_experiment_key())
+
+
+def test_exp_date_validation():
+    assert is_date_valid_for_exp("historical", "1950/01")
+    assert not is_date_valid_for_exp("historical", "1600/01")
+    assert is_date_valid_for_exp("ssp585", "2015/01")
+    assert not is_date_valid_for_exp("ssp585", "2000/06")
+    assert is_date_valid_for_exp("piControl", "2000/01")

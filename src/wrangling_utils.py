@@ -159,6 +159,38 @@ def dict_to_dash_opts(opt_dict, key_subset=False):
     return return_list
 
 
+def is_date_valid_for_exp(exp, date):
+    """This function checks if the given date is valid for the exp in question
+
+    Note- always returns true for piControl since date is irrelevant and unused by
+    most functions that interact with piControl data.
+
+    Parameters
+    ----------
+    exp : str
+        Should be a key in dict returned by get_experiment_key()
+    date : str
+        Should be of the format "YYYY/MM"
+
+    Returns
+    -------
+        Boolean :
+            True if date is valid for experiment
+    """
+    exp_key = get_experiment_key()
+    if exp_key[exp]["start_year"] == "None":
+        return True
+
+    date_list = date.split("/")
+    year = int(date_list[0])
+    after_start_year = exp_key[exp]["start_year"] <= year
+    before_end_year = exp_key[exp]["end_year"] >= year
+    if after_start_year and before_end_year:
+        return True
+    else:
+        return False
+
+
 def get_models_with_var(data_store, var_id, table_id):
     """Takes a variable id and a corresponding table id and and returns all the model labels
     with the combination"""
@@ -263,6 +295,9 @@ def get_month_and_year(dset, var_id, month, year, exp_id="historical", layer=1):
         year = str(year)
 
     # Specifying a year and month to select by with xarray
+    # 14 and 17 are added to the date here because even though the data is for the whole
+    # Month, the models typically also label it with a day and time, usually noon
+    # either on the 15th or 16th
     start_date = year + "-" + month + "-" + "14"
     end_date = year + "-" + month + "-" + "17"
 
