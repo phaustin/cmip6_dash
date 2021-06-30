@@ -70,7 +70,7 @@ comp_tab_contents = dbc.Col(
             dbc.Card(
                 [
                     dbc.CardHeader(  # The top comparison histogram
-                        "Model Comparison",
+                        id="comp_hist_title",
                         style={"fontWeight": "bold"},
                     ),
                     dbc.CardBody(
@@ -90,7 +90,7 @@ comp_tab_contents = dbc.Col(
             dbc.Card(
                 [
                     dbc.CardHeader(  # Comapring models graph
-                        "Model Run Comparison",
+                        id="member_line_comp",
                         style={"fontWeight": "bold"},
                     ),
                     dbc.CardBody(
@@ -263,12 +263,13 @@ def update_map(scenario_drop, var_drop, mod_drop, date_input, exp_drop):
         exp_id=exp_drop,
     )
     full_var_name = var_key[var_drop]["fullname"]
-    title = f"{full_var_name} {date_list[0]} {date_list[1]} {exp_drop} {mod_drop}"
+    title = f"Heatmap of {full_var_name} on {date_list[0]}/{date_list[1]} \
+     for {exp_drop} run of {mod_drop}"
     return fig, title
 
 
 @app.callback(
-    Output("mean_climatology", "figure"),
+    [Output("mean_climatology", "figure"), Output("member_line_comp", "children")],
     Input("scenario_drop", "value"),
     Input("var_drop", "value"),
     Input("mod_drop", "value"),
@@ -312,12 +313,15 @@ def update_line_comp(scenario_drop, var_drop, mod_drop, date_input, exp_drop):
         dset = xr.open_dataset(f"{folder_path}/{mod_drop}_{var_drop}.nc")
 
     fig = plot_member_line_comp(dset, var_drop)
-    return fig
+    full_var_name = var_key[var_drop]["fullname"]
+    title = f"Member Comparison of {full_var_name} Across the Full Scenario Timespan \
+     of an {exp_drop} Run of {mod_drop}"
+    return fig, title
 
 
 # Callbacks
 @app.callback(
-    Output("histogram_comparison", "figure"),
+    [Output("histogram_comparison", "figure"), Output("comp_hist_title", "children")],
     Input("scenario_drop", "value"),
     Input("var_drop", "value"),
     Input("mod_drop", "value"),
@@ -380,7 +384,13 @@ def update_comparison_hist(
         mod_drop,
         mod_comp_id=mod_comp_drop,
     )
-    return fig
+    full_var_name = var_key[var_drop]["fullname"]
+    title = (
+        title
+    ) = f"Probability Density of {full_var_name} on {date_list[0]}/{date_list[1]} for \
+        {exp_drop} Runs of {mod_drop} and {mod_comp_drop}"
+
+    return fig, title
 
 
 @app.callback(
