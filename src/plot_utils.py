@@ -97,6 +97,7 @@ def plot_year_plotly(dset, var_id, mod_id, month, year, exp_id, layer=1):
             },
         )
     )
+    # Updating the axis to the min and max of lat and lon so we get autozoom for cases
     fig.update_xaxes(
         range=[var_df["lon_adj"].min(), var_df["lon_adj"].max()],
         showticklabels=False,
@@ -108,6 +109,10 @@ def plot_year_plotly(dset, var_id, mod_id, month, year, exp_id, layer=1):
         visible=False,
     )
 
+    # Title doesn't actually end up visible with these margins
+    # instead the title of the card is specified via callback to the title of the card
+    # this plot
+    # lives in on the dashboard
     fig.update_layout(
         margin={"r": 0, "t": 0, "l": 0, "b": 0},
         title=var_key[var_id]["fullname"] + " " + year + "-" + month + " " + mod_id,
@@ -124,7 +129,7 @@ def plot_model_comparisons(dsets, var_id, mod_id, mod_comp_id="CanESM5"):
     ----------
     dsets : tuple
         The two xarray.Dataset to plot. Should be the same set of vars except for the
-        different models
+        different models.
     var_id : 'str'
         The variable to be plotted.
     mod_id : 'str
@@ -143,10 +148,12 @@ def plot_model_comparisons(dsets, var_id, mod_id, mod_comp_id="CanESM5"):
         Plotly figure plot
 
     """
+    # Translating both xarray inputs to pandas dfs
     df = dsets[0].to_dataframe().reset_index()
     df_comp = dsets[1].to_dataframe().reset_index()
 
     # Changing the column labels on the var_ids to be the model ids so we can melt
+    # i.e get everything into one pandas dataframe for plotting
     df_comp = df_comp.rename({var_id: mod_comp_id}, axis=1)[[mod_comp_id]]
     df = df.rename({var_id: mod_id}, axis=1)[[mod_id]]
     uni_df = pd.concat([df, df_comp], axis=1)
@@ -159,6 +166,10 @@ def plot_model_comparisons(dsets, var_id, mod_id, mod_comp_id="CanESM5"):
         color="model",
         histnorm="probability density",
         facet_row="model",
+    )
+
+    fig.update_layout(
+        margin={"r": 0, "t": 0, "l": 0, "b": 0},
     )
     return fig
 
@@ -194,6 +205,9 @@ def plot_member_line_comp(dset, var_id):
         y=var_id,
         color="member_num",
         title=f"Mean Climatology for {get_var_key()[var_id]['fullname']}",
+    )
+    fig.update_layout(
+        margin={"r": 0, "t": 0, "l": 0, "b": 0},
     )
     return fig
 
