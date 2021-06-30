@@ -58,6 +58,36 @@
           data = json.load(f)
      get_case_data(<specifications>))
      ```
+     
+     Here's an example of a case specification for a 1950-1955 subset of three member runs each from CanESM5 and HadGEM3-GC31-MM for leaf area index and surface air temperature:
+     ``` Python
+     write_case_definition(
+        "bc_case_mult",
+        ["tas", "lai"],
+        ["CanESM5", "HadGEM3-GC31-MM"],
+        "historical",
+        3,
+        "1950-01",
+        "1955-02",
+        (60, -139.05),
+        (49, -114.068333),
+        (case_file_path + "bc_case_mult.json"),
+    )
+
+    with open((case_file_path + "bc_case_mult.json")) as f:
+        data = json.load(f)
+     ```
+     
+     This generates a file structure like this:
+     cases/
+       -bc_case_mult.json
+       -bc_case_mult/
+             -CanESM5_tas.nc
+             -CanESM5_lai.nc
+             -HadGEM3-GC31-MM_tas.nc
+             -HadGEM3-GC31-MM_lai.nc
+             
+     The case will show up in the scenario dropdown as 'bc_case_mult.json'
 
 2) After you are happy with the case, the code should be transfered to make_case.py and version controlled. A directory will be created in the cases/ file corresponding to the name of the scenario. Each .nc file will contain all the member runs for the different combinations of models and variables.
 
