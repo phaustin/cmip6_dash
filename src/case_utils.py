@@ -6,6 +6,7 @@ import xarray as xr
 from .wrangling_utils import get_cmpi6_model_run
 from .wrangling_utils import get_model_key
 from .wrangling_utils import get_var_key
+from .wrangling_utils import is_date_valid_for_exp
 
 
 def scenario_data_dict_to_netcdf(
@@ -255,37 +256,23 @@ def write_case_definition(
     model_opts = (
         mod_key[mod_id_list[0]]["scenarios"] + mod_key[mod_id_list[0]]["controls"]
     )
-    try:
-        if exp_id not in model_opts:
-            raise AssertionError
-    except AssertionError:
+    if exp_id not in model_opts:
         print(f"experiment id should be one of {model_opts} for {mod_id_list}")
+        raise AssertionError
+
+    # Checking that the start and end dates are valid for experiment
+    if not is_date_valid_for_exp(exp_id, start_date):
+        print(f"{start_date} not valid for {exp_id}!")
+        raise AssertionError
+
+    if not is_date_valid_for_exp(exp_id, end_date):
+        print(f"{end_date} not valid for {exp_id}!")
         raise AssertionError
 
     # Members should be less than 40
     if members > 40:
         print(f"{members} is too many members")
         raise AssertionError
-    # The start date must be compatible with the exp id (1850-2014 for historical),
-    start_date_split = start_date.split("-")
-    start_date_split = [int(date) for date in start_date_split]
-    end_date_split = end_date.split("-")
-    end_date_split = [int(date) for date in end_date_split]
-
-    if exp_id == "historical":
-        if not (start_date_split[0] >= 1850 and start_date_split[0] <= 2014):
-            print("historical runs range from 1850 to 2014")
-            raise AssertionError
-        if not (end_date_split[0] >= 1850 and end_date_split[0] <= 2014):
-            print("historical runs range from 1850 to 2014")
-            raise AssertionError
-    if exp_id in mod_key[mod_id_list[0]]["scenarios"]:
-        if not start_date_split[0] >= 2015 and start_date_split[0] <= 2100:
-            print("historical runs range from 1850 to 2014")
-            raise AssertionError
-        if not end_date_split[0] >= 2015 and end_date_split[0] <= 2100:
-            print("historical runs range from 1850 to 2014")
-            raise AssertionError
     # Checking lats and lons are in the right range
     lats = [top_left[0], bottom_right[0]]
     for lat in lats:
@@ -298,8 +285,6 @@ def write_case_definition(
             print(f"{lon} is not between -180 and 180!")
             raise AssertionError
 
-    # 2014 on for pi
-    # Same with end date
     # The lats should correspond to Amon gridding (see above)
     case_definition = {
         "case_name": case_name,
