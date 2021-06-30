@@ -79,12 +79,19 @@
      ```
      
      This generates a file structure like this:
+     
      cases/
+     
        -bc_case_mult.json
+       
        -bc_case_mult/
+       
              -CanESM5_tas.nc
+             
              -CanESM5_lai.nc
+             
              -HadGEM3-GC31-MM_tas.nc
+             
              -HadGEM3-GC31-MM_lai.nc
              
      The case will show up in the scenario dropdown as 'bc_case_mult.json'
