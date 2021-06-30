@@ -118,15 +118,16 @@ If you are running into issues with the git hooks, ensure that black and flake8 
 
 ### Repository Structure
 
-There are a few oddities in the structure of this repo. The tests currently live in the main directory, as well as the script for creating cases. This was done so the imports of utils.py for the tests and make_case functions would play nicely together- there are certainly solutions to this problem out there.
+There are a few oddities in the structure of this repo. The tests currently live in the main directory, as well as the script for creating cases. This was done so the imports of utils.py for the tests and make_case functions would play nicely together but probably should be changed at some point.
 
 ### Tests
 
 There are tests for some of the case_util functions and some of the wrangling functions. Regression testing for the visuals and integration testing
-with something like selenium for the actual dashboard code has not been implemented. You can invoke these tests by calling: `pytest` from the main directory. I have found that TDD for any case functions or wrangling functions has saved me time hunting for bugs in the long run and would encourage expanding on these tests as you work on the codebase.
+with something like selenium for the actual dashboard code has not been implemented. You can invoke existing tests by calling: `pytest` from the main directory. I have found that TDD for any case functions or wrangling functions has saved me time hunting for bugs in the long run and would encourage expanding on these tests as you work on the codebase.
 
 They take about 3-5 minutes to run and are far from exhaustive but are worth running if you are making changes to the wrangling or the cases code.
-### A note about cases vs. "Auto" mode
+
+### A note about cases vs. developer mode
 
 Design choices were mostly made with the idea that the dashboard would be used by students in "case" mode. The intention is that the option developer mode would be removed when the class actually uses the tool and as such the dashboard is rather brittle in developer mode. Better error handling and restricting available options to prevent incompatible input will probably required if the dashboard is to be run in production in developer mode.
 
