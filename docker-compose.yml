@@ -1,0 +1,33 @@
+version: '3.7'
+
+services:
+  cmip6dash:
+    build:
+      context: cmip6_board
+      dockerfile: Dockerfile
+    image: phaustin/cmip6dash:apr23
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.cmip6dash.rule=Host(`dashdev.eoastest.xyz`) && PathPrefix(`/cmip6dash`)
+      - traefik.http.routers.cmip6dash.tls=true
+      - traefik.http.routers.cmip6dash.tls.certresolver=lets-encrypt
+      - traefik.http.routers.cmip6dash.service=cmip6dash
+      - traefik.http.services.cmip6dash.loadbalancer.server.port=8050
+      - traefik.http.routers.cmip6dash.middlewares=cmip6dash-stripprefix
+      - traefik.http.middlewares.cmip6dash-stripprefix.stripprefix.forceSlash=true
+      - traefik.http.middlewares.cmip6dash-stripprefix.stripprefix.prefixes=/cmip6dash
+    container_name: cmip6dash
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./dashdir:/home/jovyan/dashdir
+      - .:/home/jovyan/cmip6_dash
+    networks:
+      - proxy_aug07
+    working_dir: /home/jovyan/dashdir
+    command: gunicorn --workers=10 --threads=2 -b 0.0.0.0:8050 app:server
+    # command: python app.py
+    # command: tail -F anything
+
+networks:
+    proxy_aug07:
+      external: true

@@ -11,7 +11,7 @@ exclude: >
 repos:
 
   - repo: git://github.com/pre-commit/pre-commit-hooks
-    rev: v2.2.3
+    rev: v4.2.0
     hooks:
     - id: check-json
     - id: check-yaml
@@ -24,16 +24,16 @@ repos:
  #   - id: check-manifest
 
   - repo: https://github.com/psf/black
-    rev: 20.8b1
+    rev: 22.3.0
     hooks:
     - id: black
 
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.7.9
+    rev: 3.9.2
     hooks:
     - id: flake8
 
   - repo: https://github.com/asottile/reorder_python_imports
-    rev: v2.4.0
+    rev: v3.0.1
     hooks:
     - id: reorder-python-imports

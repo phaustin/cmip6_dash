@@ -3,8 +3,8 @@ channels:
   - eoas_ubc
   - conda-forge
 dependencies:
-  - python=3.8
-  - pip~=21.0
+  - python>3.9.0
+  - pip>21.0
   - numpy
   - scipy
   - pre-commit
@@ -12,6 +12,10 @@ dependencies:
   - intake
   - git
   - gcsfs
+  - setuptools-scm
+  - pooch
+  - gunicorn
+  - flask
   - cartopy
   - mamba
   - intake-esm
