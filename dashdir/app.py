@@ -22,6 +22,16 @@ from dash import html
 from dash.dependencies import Input
 from dash.dependencies import Output
 from dash.exceptions import PreventUpdate
+from flask import Flask
+
+server = Flask(__name__)
+
+app = dash.Dash(
+    server=server,
+    requests_pathname_prefix="/cmip6dash/",
+    external_stylesheets=[dbc.themes.BOOTSTRAP],
+    suppress_callback_exceptions=True,  # because of the tabs, not all callbacks are accessible so we suppress callback exceptions
+)
 
 
 # Grabbing the ESM datastore
@@ -157,12 +167,6 @@ dashboard_controls = dbc.Col(
     },
 )
 
-# Actual layout for the app- all the defined pieces above get put together here
-app = dash.Dash(
-    __name__,
-    external_stylesheets=[dbc.themes.BOOTSTRAP],
-    suppress_callback_exceptions=True,
-)
 
 app.layout = dbc.Container(
     [
