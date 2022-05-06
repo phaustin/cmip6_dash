@@ -1,3 +1,7 @@
+# EOAS/UBC climate modeling dashboard
+
+This repository holds python code to create a data browser for the [pangeo CMIP6 model dataset](http://gallery.pangeo.io/repos/pangeo-gallery/cmip6/intake_ESM_example.html).  A preliminary version is online at https://dashdev.eoastest.xyz/cmip6dash
+
 # Installing
 
 1) install conda-lock
